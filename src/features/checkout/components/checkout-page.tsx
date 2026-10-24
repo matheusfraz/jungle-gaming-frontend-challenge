@@ -34,7 +34,7 @@ import { useSession } from '@/features/auth/session'
 import { createQuote, useCart, useCartQuote } from '@/features/cart/hooks'
 import { CartNotices } from '@/features/cart/components/cart-notices'
 import { SummaryRows } from '@/features/cart/components/order-summary'
-import { useProfile, useWalletConnection, useWallets } from '@/features/account/hooks'
+import { useProfile, useSaveWallet, useWalletConnection, useWallets } from '@/features/account/hooks'
 import { EnsInput, NetworkSelect, WalletTypeSelect } from '@/features/account/components/fields'
 import { fieldHelp, toReferralCode } from '@/features/account/field-help'
 import { shortAddress } from '@/lib/format'
@@ -98,6 +98,7 @@ export function CheckoutPage() {
   const wallets = useWallets()
   const profile = useProfile()
   const { connect, disconnect } = useWalletConnection()
+  const saveWallet = useSaveWallet()
 
   const draft = readStorage<Draft>(storageKeys.checkoutDraft, 'session')
   const ownDraft = draft?.userId === userId ? draft : null
@@ -161,6 +162,9 @@ export function CheckoutPage() {
     if (first) {
       setWalletId(first.id)
       fillFromWallet(first, false)
+    } else {
+      // No saved wallet yet: the collector data must be filled, so show it.
+      setCollectorOpen(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallets.data, profile.data])
@@ -228,19 +232,65 @@ export function CheckoutPage() {
     }
   }
 
+  /**
+   * Without a saved wallet, the wallet data the collector just filled becomes
+   * the primary wallet (same API and rules as /perfil/carteiras).
+   */
+  const saveFormAsPrimaryWallet = async (): Promise<Wallet | null> => {
+    const values = form.getValues()
+    try {
+      const book = await saveWallet.mutateAsync({
+        slot: 'primary',
+        input: {
+          displayName: values.displayName,
+          nickname: `Minha ${walletTypeLabels[values.walletType]}`.slice(0, 30),
+          network: values.network,
+          profileName: values.profileName,
+          address: values.walletAddress,
+          secondaryAddress: values.secondaryAddress,
+          walletType: values.walletType,
+          referralCode: values.referralCode,
+          email: values.email,
+          ensName: values.ensName,
+          ensSuffix: values.ensSuffix,
+        },
+      })
+      const wallet = book.primary
+      if (!wallet) return null
+      setWalletId(wallet.id)
+      toast.success('Carteira salva no seu perfil.')
+      announce('Carteira salva no seu perfil.')
+      return wallet
+    } catch (error) {
+      // The API names the address field "address"; the form calls it "walletAddress".
+      if (isApiError(error)) {
+        for (const [field, message] of Object.entries(error.fieldErrors)) {
+          const name = field === 'address' ? 'walletAddress' : field
+          if (name in values) form.setError(name as keyof CollectorForm, { type: 'server', message })
+        }
+      }
+      setCollectorOpen(true)
+      const message = isApiError(error) && Object.keys(error.fieldErrors).length
+        ? 'Não foi possível salvar a carteira. Revise os campos destacados.'
+        : errorMessage(error)
+      setWalletError(message)
+      announce(message, 'assertive')
+      return null
+    }
+  }
+
   const onContinue = form.handleSubmit(
     async () => {
-      if (!selectedWallet) {
-        setWalletError('Selecione uma carteira cadastrada para pagar.')
-        return
-      }
       setWalletError(undefined)
-      if (connection !== 'connected') {
+      const wallet = selectedWallet ?? (await saveFormAsPrimaryWallet())
+      if (!wallet) return
+      const status = wallet.id === selectedWallet?.id ? connection : 'disconnected'
+      if (status !== 'connected') {
         // Ask the (simulated) wallet to connect, as a real dApp would, instead
         // of stopping the user with an error. A refusal is still reported.
         try {
-          await connect.mutateAsync({ walletId: selectedWallet.id, network: form.getValues('network') })
-          announce(`${walletTypeLabels[selectedWallet.walletType]} conectada.`)
+          await connect.mutateAsync({ walletId: wallet.id, network: form.getValues('network') })
+          announce(`${walletTypeLabels[wallet.walletType]} conectada.`)
         } catch (error) {
           setWalletError(errorMessage(error))
           announce(errorMessage(error), 'assertive')
@@ -643,7 +693,7 @@ export function CheckoutPage() {
                       </Link>
                     }
                   >
-                    Você ainda não tem carteiras cadastradas. Cadastre uma para pagar.
+                    Você ainda não tem carteiras cadastradas. Preencha os dados do colecionador: ao confirmar, a carteira é salva no seu perfil.
                   </InlineAlert>
                 ) : (
                   <RadioGroup
@@ -957,7 +1007,7 @@ export function CheckoutPage() {
                   </Link>
                 }
               >
-                Você ainda não tem carteiras cadastradas. Cadastre uma para pagar.
+                Você ainda não tem carteiras cadastradas. Preencha os dados do colecionador: ao confirmar, a carteira é salva no seu perfil.
               </InlineAlert>
             ) : (
               <RadioGroup

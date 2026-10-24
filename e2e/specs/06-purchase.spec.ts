@@ -72,6 +72,41 @@ test.describe('6. Compra completa', () => {
     await expect(page.getByTestId('order-receipt')).toBeVisible()
   })
 
+  test('sem carteira cadastrada: os dados do pagamento viram a carteira principal e a compra segue', async ({
+    page,
+    mocks,
+  }) => {
+    await login(page, USERS.bruno)
+    await addToCartFromDetail(page, 'golden-beat-207')
+    await page.getByRole('button', { name: 'Conectar e finalizar' }).click()
+    await expect(page).toHaveURL(/\/pagamento$/)
+    await expect(page.getByText(/Você ainda não tem carteiras cadastradas/).first()).toBeVisible()
+
+    const main = page.locator('main')
+    // Invalid referral first: the API refuses it and the field shows why.
+    await main.getByLabel('Nome do perfil').fill('Coleção do Bruno')
+    await main.getByLabel('Endereço da carteira').fill('0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed')
+    await main.getByLabel('Código de indicação').fill('ABCDEF12')
+    await main.getByLabel('Nome ENS').fill('bruno-lima')
+    await page.getByRole('button', { name: 'Confirmar compra', exact: true }).click()
+    await expect(main.getByText(/Código de indicação não encontrado/)).toBeVisible()
+
+    await main.getByLabel('Código de indicação').fill('KURIO2026')
+    await page.getByRole('button', { name: 'Confirmar compra', exact: true }).click()
+    await expect(page.getByText('Carteira salva no seu perfil.').first()).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Revise seu pedido' })).toBeVisible()
+    await confirmButton(page).click()
+    await expect(page.getByTestId('order-pending')).toBeVisible()
+    await mocks.settleOrders()
+    await expect(page.getByTestId('order-receipt')).toBeVisible()
+
+    // The wallet is now in the profile.
+    await openApp(page, '/perfil/carteiras')
+    await expect(page.getByTestId('wallet-form-primary').getByLabel('Endereço da carteira')).toHaveValue(
+      '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
+    )
+  })
+
   test('explorador simulado trata hash inexistente', async ({ page }) => {
     await openApp(page, `/explorador/tx/0x${'a'.repeat(64)}`)
     await expect(page.getByRole('heading', { name: 'Transação não encontrada' })).toBeVisible()

@@ -166,7 +166,8 @@ Catálogo → Detalhe (edição + quantidade) → Comprar → Carrinho (cupom)
 ### Pagamento: o que cada parte faz
 
 - **Perfil do colecionador:** vem preenchido com os dados do perfil e da carteira selecionada. As regras de cada campo estão na [tabela abaixo](#campos-dos-formulários-regras-e-exemplos-que-funcionam).
-- **Carteira e rede:** escolha a carteira que vai pagar (principal ou secundária). Ela precisa estar **conectada**: use **Conectar carteira**. Se ela estiver desconectada, **Confirmar compra** pede a conexão automaticamente. Sem carteira cadastrada, aparece o link **Cadastrar carteira**.
+- **Carteira e rede:** escolha a carteira que vai pagar (principal ou secundária). Ela precisa estar **conectada**: use **Conectar carteira**. Se ela estiver desconectada, **Confirmar compra** pede a conexão automaticamente.
+- **Sem carteira cadastrada:** preencha os dados do colecionador (endereço, código de indicação, nome ENS… com os [exemplos abaixo](#campos-dos-formulários-regras-e-exemplos-que-funcionam)) e escolha o tipo de carteira. Ao clicar em **Confirmar compra**, esses dados são salvos como sua carteira principal, com as mesmas regras de `/perfil/carteiras`, e a compra segue para a revisão. Se preferir, use o botão **Cadastrar carteira** para cadastrar antes.
 - **Usar outra carteira?** Marque para receber os NFTs em outro endereço. O pagamento continua saindo da carteira selecionada, e o campo **Endereço da carteira** fica editável para você informar o destino.
 - **Revisão:** mostra itens, desconto, taxa de rede e total antes do envio.
 
@@ -324,7 +325,7 @@ E2E_BASE_URL=https://kurio-omega.vercel.app E2E_REPORT=e2e/reports/producao pnpm
 | `03-auth` | Cadastro (validação, formato de e-mail, conflito, conta nova entrando de novo), login, retorno ao fluxo, expiração (controle e relógio), logout, troca de usuário |
 | `04-favorites` | Visitante, persistência, falha + rollback + nova tentativa |
 | `05-cart` | Quantidades, limites, cupom inválido/expirado/válido, remoção, persistência e merge no login |
-| `06-purchase` | Do catálogo ao recibo; recibo como snapshot; explorador simulado; carteira recém-cadastrada; remoção só do que foi comprado |
+| `06-purchase` | Do catálogo ao recibo; recibo como snapshot; explorador simulado; carteira recém-cadastrada; compra sem carteira salva (os dados do pagamento viram a carteira principal); remoção só do que foi comprado |
 | `07-payment-failures` | Pagamento recusado, clique repetido, timeout + mesma chave, carteira recusada/desconexão |
 | `08-account` | Perfil (validação e conflito), avatar, senha, carteiras com erros da API e os exemplos deste README |
 | `09-realtime-checkout` | Preço/estoque via Socket.IO no carrinho e na revisão; `QUOTE_STALE` e esgotamento no servidor |
