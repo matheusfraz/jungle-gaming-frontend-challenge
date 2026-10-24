@@ -36,6 +36,11 @@
   /* Mobile NFT detail frame: backdrop behind the art and its round buttons. */
   --backdrop: #261713;
   --backdrop-control: #301d16;
+  /* Mobile cart coupon field. */
+  --coupon-border: #3d251b;
+  --coupon-placeholder: #b5997e;
+  --coupon-from: #8a5a34;
+  --coupon-to: #c98349;
 }
 
 @theme inline {
@@ -65,6 +70,8 @@
   --color-subtle: var(--subtle);
   --color-backdrop: var(--backdrop);
   --color-backdrop-control: var(--backdrop-control);
+  --color-coupon-border: var(--coupon-border);
+  --color-coupon-placeholder: var(--coupon-placeholder);
 
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);

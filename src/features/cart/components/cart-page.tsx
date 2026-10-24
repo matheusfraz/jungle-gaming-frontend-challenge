@@ -285,20 +285,23 @@ function CouponForm({ appliedCode, variant = 'desktop' }: { appliedCode: string 
           aria-invalid={Boolean(error)}
           aria-describedby={error ? 'coupon-error' : 'coupon-hint'}
           className={cn(
-            'min-w-0 flex-1 bg-background px-3 text-xs uppercase placeholder:normal-case placeholder:text-subtle',
+            'min-w-0 flex-1 px-3 text-xs uppercase placeholder:normal-case',
+            // Mobile colors measured from the cart frame: transparent field on the
+            // sheet, warm thin border and beige placeholder.
             variant === 'mobile'
-              ? 'h-12 rounded-full border border-border pr-28 pl-5'
-              : 'h-11 rounded-l-sm border border-primary',
+              ? 'h-12 rounded-full border border-coupon-border bg-transparent pr-28 pl-5 placeholder:text-coupon-placeholder'
+              : 'h-11 rounded-l-sm border border-primary bg-background placeholder:text-subtle',
           )}
         />
         <button
           type="submit"
           disabled={apply.isPending}
           className={cn(
-            'text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-60',
+            'text-sm font-bold disabled:opacity-60',
+            // Mobile: dark-to-light gradient with light text, as in the frame.
             variant === 'mobile'
-              ? 'absolute inset-y-0 right-0 rounded-full bg-[linear-gradient(90deg,#d28a4c,#a8683a)] px-6'
-              : 'h-11 rounded-r-sm bg-primary px-5',
+              ? 'absolute inset-y-0 right-0 rounded-full bg-[linear-gradient(90deg,var(--coupon-from),var(--coupon-to))] px-6 text-foreground hover:brightness-110'
+              : 'h-11 rounded-r-sm bg-primary px-5 text-primary-foreground hover:bg-primary/90',
           )}
         >
           {apply.isPending ? 'Aplicando…' : 'Aplicar'}
