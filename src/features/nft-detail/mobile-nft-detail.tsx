@@ -119,24 +119,29 @@ export function MobileNftDetail({
   const disabled = maxQuantity === 0 || adding
 
   return (
-    <div className="pb-48">
-      <MobileTopBar
-        fallback="/mercado"
-        right={
-          <button
-            type="button"
-            onClick={onFavorite}
-            aria-pressed={favorite}
-            aria-label={favorite ? 'Favoritado' : 'Favoritar'}
-            className="inline-flex size-10 items-center justify-center rounded-full bg-card text-primary hover:bg-secondary"
-          >
-            <Heart className={cn('size-5', favorite && 'fill-current')} aria-hidden />
-          </button>
-        }
-      />
-      <MobileGallery nft={nft} />
+    // Backdrop and buttons follow the mobile frame; the sheet and the rest of
+    // the page use the card color, so no darker strip shows below the sheet.
+    <div className="min-h-dvh bg-card pb-48">
+      <div className="bg-backdrop pb-4">
+        <MobileTopBar
+          fallback="/mercado"
+          buttonClassName="border border-white/5 bg-backdrop-control"
+          right={
+            <button
+              type="button"
+              onClick={onFavorite}
+              aria-pressed={favorite}
+              aria-label={favorite ? 'Favoritado' : 'Favoritar'}
+              className="inline-flex size-10 items-center justify-center rounded-full border border-white/5 bg-backdrop-control text-primary hover:bg-secondary"
+            >
+              <Heart className={cn('size-5', favorite && 'fill-current')} aria-hidden />
+            </button>
+          }
+        />
+        <MobileGallery nft={nft} />
+      </div>
 
-      <section className="relative -mt-4 rounded-t-3xl bg-card px-5 pt-6 pb-6" aria-labelledby="nft-title">
+      <section className="relative -mt-8 rounded-t-3xl bg-card px-5 pt-6 pb-6" aria-labelledby="nft-title">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 id="nft-title" className="text-lg font-bold tracking-wide">

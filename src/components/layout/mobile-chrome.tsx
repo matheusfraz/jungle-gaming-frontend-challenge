@@ -12,11 +12,14 @@ export function MobileTopBar({
   fallback = '/',
   right,
   className,
+  buttonClassName,
 }: {
   title?: string
   fallback?: string
   right?: ReactNode
   className?: string
+  /** Classes for the round back button (e.g. a lighter fill on the detail backdrop). */
+  buttonClassName?: string
 }) {
   const router = useRouter()
   const back = () => {
@@ -28,7 +31,10 @@ export function MobileTopBar({
       <button
         type="button"
         onClick={back}
-        className="inline-flex size-10 items-center justify-center rounded-full bg-card text-primary hover:bg-secondary"
+        className={cn(
+          'inline-flex size-10 items-center justify-center rounded-full bg-card text-primary hover:bg-secondary',
+          buttonClassName,
+        )}
         aria-label="Voltar"
       >
         <ChevronLeft className="size-5" aria-hidden />

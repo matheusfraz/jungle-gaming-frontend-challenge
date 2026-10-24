@@ -33,6 +33,9 @@
   --ring: #f0a866;
   --band: #38220e;
   --subtle: #b9a597;
+  /* Mobile NFT detail frame: backdrop behind the art and its round buttons. */
+  --backdrop: #261713;
+  --backdrop-control: #301d16;
 }
 
 @theme inline {
@@ -60,6 +63,8 @@
   --color-ring: var(--ring);
   --color-band: var(--band);
   --color-subtle: var(--subtle);
+  --color-backdrop: var(--backdrop);
+  --color-backdrop-control: var(--backdrop-control);
 
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
