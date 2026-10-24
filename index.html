@@ -4,11 +4,64 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Jungle Gaming — catálogo de NFTs para jogos." />
-    <title>Jungle Gaming</title>
+    <meta name="theme-color" content="#140d0b" />
+    <meta
+      name="description"
+      content="Kurio: marketplace de NFTs selecionados. Colecione arte digital rara de criadores emergentes e consagrados, com carteiras compatíveis e procedência verificada."
+    />
+    <title>Kurio · Marketplace de NFTs</title>
   </head>
   <body>
-    <div id="root"></div>
+    <noscript>A Kurio precisa de JavaScript para funcionar.</noscript>
+    <!--
+      Static app shell: painted as soon as the CSS arrives, then replaced by
+      React on the first render. The home hero is the same markup and image
+      the app renders, so the first paint already shows real content.
+    -->
+    <div id="root">
+      <div class="flex min-h-screen flex-col" aria-busy="true">
+        <header class="container-page">
+          <div class="flex h-[72px] items-center justify-between gap-4 border-b border-border">
+            <span class="text-sm font-extrabold tracking-[0.25em]">KURIO</span>
+          </div>
+        </header>
+        <main id="shell-main" class="flex-1"></main>
+      </div>
+    </div>
+    <template id="shell-home">
+      <section class="container-page grid items-center gap-8 pt-6 pb-4 md:grid-cols-[minmax(0,1fr)_minmax(0,455px)] md:gap-10 md:pt-4">
+        <div class="flex flex-col gap-5 md:pl-12">
+          <p class="text-sm font-semibold tracking-widest">Bem-vindo à Kurio</p>
+          <h1 class="text-[28px] leading-[1.6] font-bold tracking-[0.12em] uppercase sm:text-4xl sm:leading-[1.75] lg:text-[40px]">
+            Seja dono do futuro da arte digital
+          </h1>
+          <p class="max-w-[520px] text-xs leading-6 tracking-wide text-muted-foreground sm:text-[13px]">
+            Descubra NFTs selecionados de criadores emergentes e consagrados. Colecione arte digital rara, apoie artistas e
+            tenha uma parte da cultura da internet.
+          </p>
+          <div class="flex items-center justify-between gap-6 pt-2"><span class="h-10 w-[134px]"></span></div>
+        </div>
+        <div class="block overflow-hidden rounded-[20px]">
+          <img
+            src="/nfts/ape-emerald.webp"
+            alt="Emerald Ape #042: macaco de óculos redondos verdes e jaqueta college verde."
+            width="480"
+            height="480"
+            fetchpriority="high"
+            class="aspect-square w-full object-cover"
+          />
+        </div>
+      </section>
+    </template>
+    <script>
+      ;(function () {
+        var path = location.pathname
+        if (path === '/' || path === '/entrar' || path === '/cadastro') {
+          var template = document.getElementById('shell-home')
+          document.getElementById('shell-main').appendChild(template.content.cloneNode(true))
+        }
+      })()
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

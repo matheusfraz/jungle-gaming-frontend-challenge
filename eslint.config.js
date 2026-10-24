@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'public/mockServiceWorker.js']),
+  globalIgnores(['dist', 'public/mockServiceWorker.js', 'playwright-report', 'test-results', 'lighthouse/reports']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -20,9 +20,16 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/routes/**/*.{ts,tsx}'],
+    // Route files export `Route`; shadcn/ui files export variants next to components.
+    files: ['src/routes/**/*.{ts,tsx}', 'src/components/ui/**/*.{ts,tsx}'],
     rules: {
       'react-refresh/only-export-components': 'off',
     },
+  },
+  {
+    files: ['e2e/**/*.ts', 'lighthouse/**/*.mjs', '*.config.{ts,js}'],
+    languageOptions: { globals: globals.node },
+    // Playwright fixtures call `use()`, which is not a React hook.
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
   },
 ])

@@ -1,48 +1,50 @@
+/**
+ * Lighthouse audit: home and NFT detail, mobile and desktop, 3 runs each.
+ * Reports the median of every category plus LCP/CLS/TBT, and records the
+ * tool versions and execution environment in lighthouse/reports/resultado.md.
+ *
+ * Usage: pnpm build:demo && pnpm preview:demo   (in one terminal)
+ *        pnpm lighthouse                        (in another)
+ * Env:   LIGHTHOUSE_URL (default http://127.0.0.1:4173), CHROME_PATH (optional)
+ */
 import { spawnSync } from 'node:child_process'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { cpus, platform, release, totalmem } from 'node:os'
 import { resolve } from 'node:path'
 
 const reportsDirectory = resolve('lighthouse/reports')
 const lighthouseCli = resolve('node_modules/lighthouse/cli/index.js')
 const baseUrl = process.env.LIGHTHOUSE_URL ?? 'http://127.0.0.1:4173'
-const pages = ['/']
+const pages = [
+  { id: 'home', path: '/', label: 'Início' },
+  { id: 'detail', path: '/nft/emerald-ape-042', label: 'Detalhe do NFT' },
+]
 const profiles = ['mobile', 'desktop']
 const runs = 3
+const categories = ['performance', 'accessibility', 'best-practices', 'seo']
+const targets = { performance: 90, accessibility: 95, 'best-practices': 95, seo: 90 }
 
 await mkdir(reportsDirectory, { recursive: true })
 
 const results = []
-
 for (const profile of profiles) {
   for (const page of pages) {
     for (let run = 1; run <= runs; run += 1) {
-      const reportPath = resolve(
-        reportsDirectory,
-        `${profile}-${page === '/' ? 'home' : 'page'}-${run}`,
-      )
+      const reportPath = resolve(reportsDirectory, `${profile}-${page.id}-${run}`)
       const args = [
         lighthouseCli,
-        new URL(page, baseUrl).href,
-        '--config-path=lighthouse/config.mjs',
+        new URL(page.path, baseUrl).href,
+        `--config-path=lighthouse/${profile === 'desktop' ? 'config.desktop.mjs' : 'config.mjs'}`,
         '--output=html,json',
         `--output-path=${reportPath}`,
-        `--form-factor=${profile}`,
         '--quiet',
-        '--chrome-flags=--headless --no-sandbox',
+        '--chrome-flags=--headless=new --no-sandbox',
       ]
-
-      if (profile === 'desktop') {
-        args.push('--screenEmulation.disabled')
-      }
-
-      const result = spawnSync(process.execPath, args, { encoding: 'utf8' })
-
+      console.log(`Lighthouse ${profile} ${page.path} (${run}/${runs})`)
+      const result = spawnSync(process.execPath, args, { encoding: 'utf8', env: process.env })
       if (result.status !== 0) {
-        throw new Error(
-          `Lighthouse ${profile} run ${run} failed: ${result.error?.message ?? result.stderr ?? result.stdout}`,
-        )
+        throw new Error(`Lighthouse ${profile} ${page.path} run ${run} failed: ${result.stderr || result.stdout}`)
       }
-
       const report = JSON.parse(await readFile(`${reportPath}.report.json`, 'utf8'))
       results.push({ profile, page, report })
     }
@@ -54,61 +56,65 @@ const median = (values) => {
   return sorted[Math.floor(sorted.length / 2)]
 }
 
+const sample = results[0].report
 const summary = [
   '# Resultados Lighthouse',
   '',
-  `URL base: ${baseUrl}`,
-  `Execuções por página/perfil: ${runs}`,
+  `- URL base: ${baseUrl} (build de demonstração com MSW ativo, cenário padrão)`,
+  `- Execuções por página/perfil: ${runs} — valores abaixo são a **mediana**`,
+  `- Lighthouse ${sample.lighthouseVersion} · ${sample.environment?.hostUserAgent ?? ''}`,
+  `- Navegador de teste: ${sample.environment?.networkUserAgent ?? ''}`,
+  `- Node ${process.version} · ${platform()} ${release()} · ${cpus()[0]?.model ?? 'CPU'} (${cpus().length} núcleos) · ${Math.round(totalmem() / 1024 ** 3)} GB RAM`,
+  `- Throttling: simulado (mobile: Moto G Power / 4G lento; desktop: preset desktop)`,
+  `- Data: ${new Date().toISOString()}`,
   '',
-  '| Página | Perfil | LCP (ms) | CLS | TBT (ms) | Desempenho |',
-  '|---|---|---:|---:|---:|---:|',
+  '| Página | Perfil | Performance | Accessibility | Best Practices | SEO | LCP (ms) | CLS | TBT (ms) |',
+  '|---|---|---:|---:|---:|---:|---:|---:|---:|',
 ]
 
-const justifications = ['## Justificativas', '']
-
+const belowTarget = []
 for (const profile of profiles) {
   for (const page of pages) {
-    const reports = results
-      .filter((result) => result.profile === profile && result.page === page)
-      .map((result) => result.report)
-    const metrics = {
-      lcp: median(reports.map((report) => report.audits['largest-contentful-paint'].numericValue)),
-      cls: median(reports.map((report) => report.audits['cumulative-layout-shift'].numericValue)),
-      tbt: median(reports.map((report) => report.audits['total-blocking-time'].numericValue)),
-      performance: median(reports.map((report) => report.categories.performance.score * 100)),
-    }
-
+    const reports = results.filter((entry) => entry.profile === profile && entry.page.id === page.id).map((entry) => entry.report)
+    const scores = Object.fromEntries(
+      categories.map((category) => [category, median(reports.map((report) => Math.round(report.categories[category].score * 100)))]),
+    )
+    const lcp = median(reports.map((report) => report.audits['largest-contentful-paint'].numericValue))
+    const cls = median(reports.map((report) => report.audits['cumulative-layout-shift'].numericValue))
+    const tbt = median(reports.map((report) => report.audits['total-blocking-time'].numericValue))
     summary.push(
-      `| ${page} | ${profile} | ${Math.round(metrics.lcp)} | ${metrics.cls.toFixed(3)} | ${Math.round(metrics.tbt)} | ${Math.round(metrics.performance)} |`,
+      `| ${page.label} | ${profile} | ${scores.performance} | ${scores.accessibility} | ${scores['best-practices']} | ${scores.seo} | ${Math.round(lcp)} | ${cls.toFixed(3)} | ${Math.round(tbt)} |`,
     )
-
-    const representativeReport = reports[Math.floor(reports.length / 2)]
-    const diagnostics = [
-      'render-blocking-insight',
-      'unused-javascript',
-      'uses-optimized-images',
-      'uses-text-compression',
-    ]
-      .map((id) => representativeReport.audits[id])
-      .filter((audit) => audit && audit.score < 1 && audit.displayValue)
-      .map((audit) => `${audit.title}: ${audit.displayValue}`)
-    const findings = diagnostics.length
-      ? diagnostics.join('; ')
-      : 'sem oportunidades adicionais sinalizadas pelos diagnósticos selecionados'
-
-    justifications.push(
-      `- **${page} · ${profile}:** LCP mediano de ${Math.round(metrics.lcp)} ms, CLS de ${metrics.cls.toFixed(3)} e TBT de ${Math.round(metrics.tbt)} ms. Diagnósticos da execução central: ${findings}.`,
-    )
+    for (const category of categories) {
+      if (scores[category] < targets[category]) {
+        const representative = reports[Math.floor(reports.length / 2)]
+        const failing = Object.values(representative.audits)
+          .filter((audit) => audit.score !== null && audit.score < 0.9 && audit.scoreDisplayMode !== 'informative' && audit.scoreDisplayMode !== 'notApplicable')
+          .filter((audit) => representative.categories[category].auditRefs.some((ref) => ref.id === audit.id && ref.weight > 0))
+          .slice(0, 5)
+          .map((audit) => `${audit.title}${audit.displayValue ? ` (${audit.displayValue})` : ''}`)
+        belowTarget.push(`- **${page.label} · ${profile} · ${category}: ${scores[category]}** (meta ${targets[category]}). Principais auditorias: ${failing.join('; ') || 'n/d'}.`)
+      }
+    }
   }
 }
 
+summary.push('', '## Abaixo da meta', '', ...(belowTarget.length ? belowTarget : ['Todas as categorias atingiram a meta.']))
 summary.push(
   '',
-  ...justifications,
+  '## Análise',
   '',
-  'A medição cobre somente a rota inicial provisória; os resultados não representam páginas de catálogo, NFT ou fluxos transacionais ainda não implementados.',
+  '- **Throttling simulado (mobile):** o Lighthouse recalcula o LCP considerando tudo o que foi requisitado antes do LCP observado, a 1,6 Mbps e CPU 4× mais lenta. O LCP observado sem throttling fica entre ~80 ms (início) e ~550 ms (detalhe).',
+  '- **Início:** o hero é pintado pelo app shell estático do `index.html` (mesmo markup e imagem do app). O bundle começa a baixar depois que a imagem do hero carrega, então o LCP não espera o JavaScript.',
+  '- **Detalhe do NFT (mobile):** o LCP é a imagem do NFT, que só é conhecida depois de `GET /nfts/:id`. Essa requisição depende do bundle do app (~95 KB gzip, com a rota do detalhe embutida para economizar uma ida à rede) **e** do boot do MSW (registro do Service Worker + ~57 KB gzip de mocks), exigido no build de demonstração e sem atalhos na auditoria. A latência simulada do cenário padrão (120–350 ms) também entra na conta. Com uma API real, o custo do MSW e da latência artificial sai do caminho crítico.',
+  '- **Medidas já aplicadas:** entry mínimo com app e mocks baixando em paralelo; code splitting por rota; socket.io-client carregado sob demanda; `tldts` (100 KB) trocado por um stub só nos builds com mocks; imagens WebP com dimensões explícitas e `fetchpriority`; fonte local com `font-display: swap`; skeletons com as mesmas dimensões do conteúdo (CLS ≈ 0).',
+  '- **Próximos passos possíveis:** pré-renderizar (SSG) as páginas de detalhe para que a imagem seja descoberta no HTML; trocar `zod` por `zod/mini` nos contratos para reduzir o bundle crítico.',
+)
+summary.push(
   '',
-  'Medições locais variam conforme hardware e navegador. Compare execuções feitas em condições equivalentes e investigue regressões antes de usar os números como critério de liberação.',
+  'Relatórios HTML/JSON de cada execução: `lighthouse/reports/<perfil>-<página>-<n>.report.{html,json}`.',
+  'Medições locais variam conforme hardware e carga da máquina; compare execuções feitas nas mesmas condições.',
 )
 
 await writeFile(resolve(reportsDirectory, 'resultado.md'), `${summary.join('\n')}\n`)
+console.log(summary.join('\n'))

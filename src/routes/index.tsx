@@ -1,23 +1,23 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { z } from 'zod'
-
-const catalogSearchSchema = z.object({
-  q: z.string().optional(),
-  category: z.string().optional(),
-  sort: z.enum(['newest', 'price-asc', 'price-desc']).optional(),
-  page: z.coerce.number().int().positive().catch(1),
-})
+import { useDocumentTitle } from '@/components/common/use-document-title'
+import { HomeView } from '@/features/catalog/components/home-view'
+import { nftListQueryOptions } from '@/features/catalog/api'
+import { catalogSearchSchema, toListQuery } from '@/features/catalog/search'
+import { useSetCatalogSearch } from '@/features/catalog/use-catalog-search'
 
 function HomePage() {
-  return (
-    <main className="page-shell">
-      <h1>Jungle Gaming</h1>
-      <p>O catálogo e os demais fluxos serão adicionados nas features do projeto.</p>
-    </main>
-  )
+  useDocumentTitle('Marketplace de NFTs')
+  const search = Route.useSearch()
+  const setSearch = useSetCatalogSearch('/')
+  return <HomeView search={search} onSearch={setSearch} />
 }
 
 export const Route = createFileRoute('/')({
-  validateSearch: (search) => catalogSearchSchema.parse(search),
+  validateSearch: catalogSearchSchema,
+  loaderDeps: ({ search }) => search,
+  // Start the catalog request in parallel with the route code.
+  loader: ({ context, deps }) => {
+    void context.queryClient.prefetchQuery(nftListQueryOptions(toListQuery(deps)))
+  },
   component: HomePage,
 })

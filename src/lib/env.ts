@@ -1,17 +1,17 @@
-import { z } from 'zod'
-
-const envSchema = z.object({
-  VITE_ENABLE_MOCKS: z.stringbool().default(false),
-  VITE_API_URL: z.string().trim().min(1).default('/api'),
-})
-
-const parsedEnv = envSchema.safeParse(import.meta.env)
-
-if (!parsedEnv.success) {
-  throw new Error(`Invalid application environment: ${z.prettifyError(parsedEnv.error)}`)
+/**
+ * Build-time environment. Kept dependency-free because it is part of the tiny
+ * entry chunk (see main.tsx).
+ */
+function readBoolean(value: unknown, fallback: boolean): boolean {
+  if (value === undefined || value === '') return fallback
+  if (value === 'true' || value === '1') return true
+  if (value === 'false' || value === '0') return false
+  throw new Error(`Invalid boolean environment value: ${String(value)}`)
 }
 
+const apiUrl = String(import.meta.env.VITE_API_URL ?? '/api').trim() || '/api'
+
 export const env = {
-  enableMocks: parsedEnv.data.VITE_ENABLE_MOCKS,
-  apiUrl: parsedEnv.data.VITE_API_URL,
+  enableMocks: readBoolean(import.meta.env.VITE_ENABLE_MOCKS, false),
+  apiUrl,
 }

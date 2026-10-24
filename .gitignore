@@ -17,8 +17,6 @@ dist-ssr
 !.env.mocks
 playwright-report
 test-results
-lighthouse/reports/*.html
-lighthouse/reports/*.json
 
 # Editor directories and files
 .vscode/*
@@ -30,3 +28,7 @@ lighthouse/reports/*.json
 *.njsproj
 *.sln
 *.sw?
+
+# Local scratch and tooling
+.tmp
+.claude

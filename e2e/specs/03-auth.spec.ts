@@ -1,0 +1,94 @@
+import { expect, login, logout, openApp, test, USERS } from '../support/fixtures'
+
+test.describe('3. Cadastro, login, expiração, logout e troca de usuário', () => {
+  test('cadastro valida campos, trata conflito e autentica', async ({ page }) => {
+    await openApp(page, '/cadastro')
+    const dialog = page.getByRole('dialog')
+
+    // Client-side validation
+    await dialog.getByRole('button', { name: 'Criar conta' }).click()
+    await expect(dialog.getByText('Nome de usuário é obrigatório.')).toBeVisible()
+    await expect(dialog.getByPlaceholder('Nome de usuário')).toHaveAttribute('aria-invalid', 'true')
+
+    // Server-side conflict (e-mail already registered)
+    await dialog.getByPlaceholder('Nome de usuário').fill('nova_conta')
+    await dialog.getByPlaceholder('Digite seu e-mail').fill(USERS.ana.email)
+    await dialog.getByPlaceholder('Senha', { exact: true }).fill('Segura123')
+    await dialog.getByPlaceholder('Confirmar senha').fill('Segura123')
+    await dialog.getByRole('button', { name: 'Criar conta' }).click()
+    await expect(dialog.getByText('Este e-mail já está cadastrado.')).toBeVisible()
+
+    // Fix and succeed
+    await dialog.getByPlaceholder('Digite seu e-mail').fill('nova@kurio.test')
+    await dialog.getByRole('button', { name: 'Criar conta' }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await page.waitForFunction(() => Boolean(localStorage.getItem('kurio:token')))
+
+    // Session survives refresh
+    await page.reload()
+    await openApp(page, '/perfil')
+    await expect(page.locator('main').getByLabel('E-mail')).toHaveValue('nova@kurio.test')
+  })
+
+  test('login inválido mostra erro e login válido retorna ao fluxo anterior', async ({ page }) => {
+    await openApp(page, '/perfil/carteiras')
+    await expect(page).toHaveURL(/\/entrar\?redirect=/)
+    const dialog = page.getByRole('dialog')
+    await dialog.getByPlaceholder('contato@email.com').fill(USERS.ana.email)
+    await dialog.getByPlaceholder('Senha').fill('errada123')
+    await dialog.getByRole('button', { name: 'Entrar', exact: true }).click()
+    await expect(dialog.getByText('E-mail ou senha incorretos.')).toBeVisible()
+
+    await dialog.getByPlaceholder('Senha').fill(USERS.ana.password)
+    await dialog.getByRole('button', { name: 'Entrar', exact: true }).click()
+    await expect(page).toHaveURL(/\/perfil\/carteiras$/)
+    await expect(page.getByRole('heading', { name: 'Carteira principal' })).toBeVisible()
+  })
+
+  test('sessão expirada redireciona ao login preservando o contexto', async ({ page, mocks }) => {
+    await login(page, USERS.ana)
+    await openApp(page, '/perfil')
+    await expect(page.locator('main').getByLabel('Nome de exibição')).toHaveValue('Ana Souza')
+
+    await mocks.expireSessions()
+    await page.getByRole('button', { name: 'Salvar' }).click()
+
+    await expect(page).toHaveURL(/\/entrar\?.*reason=expired/)
+    await expect(page.getByText('Sua sessão expirou. Entre novamente para continuar de onde parou.')).toBeVisible()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByPlaceholder('contato@email.com').fill(USERS.ana.email)
+    await dialog.getByPlaceholder('Senha').fill(USERS.ana.password)
+    await dialog.getByRole('button', { name: 'Entrar', exact: true }).click()
+    await expect(page).toHaveURL(/\/perfil$/)
+  })
+
+  test.describe('expiração pelo relógio', () => {
+    test.use({ scenario: 'session-expired' })
+    test('sessão curta expira após 20 s (relógio controlado)', async ({ page }) => {
+      await page.clock.install()
+      await login(page, USERS.ana)
+      await openApp(page, '/perfil')
+      await expect(page.locator('main').getByLabel('Nome de exibição')).toHaveValue('Ana Souza')
+      await page.clock.fastForward(25_000)
+      await page.getByRole('button', { name: 'Salvar' }).click()
+      await expect(page).toHaveURL(/reason=expired/)
+    })
+  })
+
+  test('logout e troca de usuário limpam dados privados', async ({ page }) => {
+    await login(page, USERS.ana)
+    await openApp(page, '/perfil/favoritos')
+    await expect(page.getByTestId('favorites-grid').getByTestId('nft-card')).toHaveCount(2)
+
+    await logout(page)
+    await expect(page).toHaveURL(/\/$/)
+    await openApp(page, '/perfil/favoritos')
+    await expect(page).toHaveURL(/\/entrar/)
+
+    await login(page, USERS.bruno, '/entrar?redirect=%2Fperfil%2Ffavoritos')
+    await expect(page).toHaveURL(/\/perfil\/favoritos$/)
+    await expect(page.getByRole('heading', { name: 'Nenhum favorito ainda' })).toBeVisible()
+    await openApp(page, '/perfil')
+    await expect(page.locator('main').getByLabel('Nome de exibição')).toHaveValue('Bruno Lima')
+  })
+})

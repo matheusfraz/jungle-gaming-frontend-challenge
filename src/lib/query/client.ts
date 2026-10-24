@@ -1,18 +1,28 @@
 import { QueryClient } from '@tanstack/react-query'
-import { ApiRequestError } from '../http/client'
+import { isApiError } from '../http/client'
 
+/**
+ * Cache policy (see ARCHITECTURE.md › Cache):
+ * - public catalog data: fresh for 30 s, kept 5 min, background refetch on remount;
+ * - queries retry only transient failures (network, timeout, 5xx), twice, with backoff;
+ * - 4xx answers (validation, auth, not found, conflicts) are never retried;
+ * - mutations never retry automatically — order creation retries explicitly with
+ *   the same idempotency key, everything else asks the user.
+ */
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
       retry: (failureCount, error) => {
-        if (error instanceof ApiRequestError && error.status !== undefined) {
-          return error.status >= 500 && failureCount < 2
-        }
-
+        if (isApiError(error)) return error.isTransient && failureCount < 2
         return failureCount < 2
       },
-      refetchOnWindowFocus: false,
+      retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 4000),
+    },
+    mutations: {
+      retry: false,
     },
   },
 })

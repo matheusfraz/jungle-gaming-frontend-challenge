@@ -1,18 +1,31 @@
 # Resultados Lighthouse
 
-URL base: http://127.0.0.1:4173
-Execuções por página/perfil: 3
+- URL base: http://127.0.0.1:4173 (build de demonstração com MSW ativo, cenário padrão)
+- Execuções por página/perfil: 3 — valores abaixo são a **mediana**
+- Lighthouse 13.5.0 · Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36
+- Navegador de teste: Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36
+- Node v24.11.1 · win32 10.0.19045 · 13th Gen Intel(R) Core(TM) i7-13620H (16 núcleos) · 16 GB RAM
+- Throttling: simulado (mobile: Moto G Power / 4G lento; desktop: preset desktop)
+- Data: 2026-10-24T05:57:08.542Z
 
-| Página | Perfil | LCP (ms) | CLS | TBT (ms) | Desempenho |
-|---|---|---:|---:|---:|---:|
-| / | mobile | 2012 | 0.000 | 27 | 98 |
-| / | desktop | 2013 | 0.000 | 29 | 82 |
+| Página | Perfil | Performance | Accessibility | Best Practices | SEO | LCP (ms) | CLS | TBT (ms) |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Início | mobile | 91 | 100 | 100 | 100 | 3360 | 0.035 | 128 |
+| Detalhe do NFT | mobile | 86 | 100 | 100 | 100 | 4095 | 0.029 | 87 |
+| Início | desktop | 100 | 100 | 100 | 100 | 776 | 0.000 | 0 |
+| Detalhe do NFT | desktop | 99 | 100 | 100 | 100 | 884 | 0.003 | 0 |
 
-## Justificativas
+## Abaixo da meta
 
-- **/ · mobile:** LCP mediano de 2012 ms, CLS de 0.000 e TBT de 27 ms. Diagnósticos da execução central: Render-blocking requests: Est savings of 150 ms; Reduce unused JavaScript: Est savings of 80 KiB.
-- **/ · desktop:** LCP mediano de 2013 ms, CLS de 0.000 e TBT de 29 ms. Diagnósticos da execução central: Render-blocking requests: Est savings of 150 ms; Reduce unused JavaScript: Est savings of 80 KiB.
+- **Detalhe do NFT · mobile · performance: 86** (meta 90). Principais auditorias: Largest Contentful Paint (4.1 s).
 
-A medição cobre somente a rota inicial provisória; os resultados não representam páginas de catálogo, NFT ou fluxos transacionais ainda não implementados.
+## Análise
 
-Medições locais variam conforme hardware e navegador. Compare execuções feitas em condições equivalentes e investigue regressões antes de usar os números como critério de liberação.
+- **Throttling simulado (mobile):** o Lighthouse recalcula o LCP considerando tudo o que foi requisitado antes do LCP observado, a 1,6 Mbps e CPU 4× mais lenta. O LCP observado sem throttling fica entre ~80 ms (início) e ~550 ms (detalhe).
+- **Início:** o hero é pintado pelo app shell estático do `index.html` (mesmo markup e imagem do app). O bundle começa a baixar depois que a imagem do hero carrega, então o LCP não espera o JavaScript.
+- **Detalhe do NFT (mobile):** o LCP é a imagem do NFT, que só é conhecida depois de `GET /nfts/:id`. Essa requisição depende do bundle do app (~95 KB gzip, com a rota do detalhe embutida para economizar uma ida à rede) **e** do boot do MSW (registro do Service Worker + ~57 KB gzip de mocks), exigido no build de demonstração e sem atalhos na auditoria. A latência simulada do cenário padrão (120–350 ms) também entra na conta. Com uma API real, o custo do MSW e da latência artificial sai do caminho crítico.
+- **Medidas já aplicadas:** entry mínimo com app e mocks baixando em paralelo; code splitting por rota; socket.io-client carregado sob demanda; `tldts` (100 KB) trocado por um stub só nos builds com mocks; imagens WebP com dimensões explícitas e `fetchpriority`; fonte local com `font-display: swap`; skeletons com as mesmas dimensões do conteúdo (CLS ≈ 0).
+- **Próximos passos possíveis:** pré-renderizar (SSG) as páginas de detalhe para que a imagem seja descoberta no HTML; trocar `zod` por `zod/mini` nos contratos para reduzir o bundle crítico.
+
+Relatórios HTML/JSON de cada execução: `lighthouse/reports/<perfil>-<página>-<n>.report.{html,json}`.
+Medições locais variam conforme hardware e carga da máquina; compare execuções feitas nas mesmas condições.
