@@ -97,4 +97,32 @@ test.describe('8. Perfil, avatar, senha e carteiras', () => {
       '0x2222222222222222222222222222222222222222',
     )
   })
+
+  test('os exemplos mostrados nos campos (e no README) são aceitos', async ({ page }) => {
+    await login(page, USERS.bruno)
+    await openApp(page, '/perfil/carteiras')
+    await page.getByRole('button', { name: 'Adicionar' }).first().click()
+    const primary = page.getByTestId('wallet-form-primary')
+    await expect(primary.getByText(/Ex\.: 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed/)).toBeVisible()
+
+    await primary.getByLabel('Apelido da carteira').fill('Minha MetaMask')
+    await primary.getByLabel('Nome do perfil').fill('Coleção da Ana')
+    await primary.getByLabel('Endereço da carteira').fill('0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed')
+    await primary.getByLabel('ENS ou carteira secundária (opcional)').fill('kurio.eth')
+    // Typed in lowercase on purpose: the field stores it in uppercase.
+    await primary.getByLabel('Código de indicação').fill('kurio2026')
+    await primary.getByLabel('Nome ENS').fill('ana-souza')
+    await primary.getByRole('button', { name: 'Salvar carteira' }).click()
+    await expect(page.getByText('Carteira principal salva.').first()).toBeVisible()
+
+    await page.getByRole('button', { name: 'Adicionar' }).click()
+    const secondary = page.getByTestId('wallet-form-secondary')
+    await secondary.getByLabel('Endereço da carteira').fill('0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359')
+    await secondary.getByLabel('Código de indicação').fill('KURIO2026')
+    await secondary.getByRole('button', { name: 'Salvar carteira' }).click()
+    await expect(page.getByText('Carteira secundária salva.').first()).toBeVisible()
+
+    await page.reload()
+    await expect(page.getByTestId('wallet-form-primary').getByLabel('Código de indicação')).toHaveValue('KURIO2026')
+  })
 })

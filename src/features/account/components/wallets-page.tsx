@@ -13,6 +13,7 @@ import { ErrorState, InlineAlert } from '@/components/common/states'
 import { useDocumentTitle } from '@/components/common/use-document-title'
 import { announce } from '@/components/feedback/announce'
 import { useProfile, useSaveWallet, useSetSecondarySame, useWallets } from '../hooks'
+import { fieldHelp, toReferralCode } from '../field-help'
 import { EnsInput, NetworkSelect, WalletTypeSelect } from './fields'
 
 const fields = [
@@ -95,7 +96,7 @@ function WalletForm({
         <FormField label="Nome de exibição" required error={errors.displayName?.message}>
           {(props) => <Input {...props} {...form.register('displayName')} />}
         </FormField>
-        <FormField label="Apelido da carteira" required error={errors.nickname?.message}>
+        <FormField label="Apelido da carteira" required error={errors.nickname?.message} hint={fieldHelp.nickname}>
           {(props) => <Input {...props} {...form.register('nickname')} />}
         </FormField>
         <FormField label="Rede" required error={errors.network?.message}>
@@ -107,16 +108,17 @@ function WalletForm({
             />
           )}
         </FormField>
-        <FormField label="Nome do perfil" required error={errors.profileName?.message}>
+        <FormField label="Nome do perfil" required error={errors.profileName?.message} hint={fieldHelp.profileName}>
           {(props) => <Input {...props} {...form.register('profileName')} />}
         </FormField>
-        <FormField label="Endereço da carteira" required error={errors.address?.message}>
+        <FormField label="Endereço da carteira" required error={errors.address?.message} hint={fieldHelp.address}>
           {(props) => <Input {...props} placeholder="Endereço 0x da carteira" {...form.register('address')} />}
         </FormField>
         <FormField
           label="ENS ou carteira secundária (opcional)"
           hideLabel
           error={errors.secondaryAddress?.message}
+          hint={fieldHelp.secondaryAddress}
           className="md:pt-7"
         >
           {(props) => <Input {...props} placeholder="ENS ou carteira secundária (opcional)" {...form.register('secondaryAddress')} />}
@@ -130,13 +132,13 @@ function WalletForm({
             />
           )}
         </FormField>
-        <FormField label="Código de indicação" required error={errors.referralCode?.message} hint="Códigos válidos começam com KURIO, ex.: KURIO2026">
-          {(props) => <Input {...props} className="uppercase" {...form.register('referralCode')} />}
+        <FormField label="Código de indicação" required error={errors.referralCode?.message} hint={fieldHelp.referralCode}>
+          {(props) => <Input {...props} className="uppercase" {...form.register('referralCode', { setValueAs: toReferralCode })} />}
         </FormField>
         <FormField label="E-mail" required error={errors.email?.message}>
           {(props) => <Input {...props} type="email" autoComplete="email" {...form.register('email')} />}
         </FormField>
-        <FormField label="Nome ENS" required error={errors.ensName?.message}>
+        <FormField label="Nome ENS" required error={errors.ensName?.message} hint={fieldHelp.ensName}>
           {(props) => (
             <Controller
               control={form.control}

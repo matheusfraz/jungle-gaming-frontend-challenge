@@ -21,6 +21,7 @@ import { useDocumentTitle } from '@/components/common/use-document-title'
 import { announce } from '@/components/feedback/announce'
 import { PasswordInput } from '@/features/auth/components/password-input'
 import { useChangePassword, useProfile, useRemoveAvatar, useUpdateProfile, useUploadAvatar } from '../hooks'
+import { fieldHelp } from '../field-help'
 import { EnsInput } from './fields'
 
 const MAX_AVATAR_BYTES = 1024 * 1024
@@ -196,13 +197,13 @@ function ProfileFormInner({ profile }: { profile: Profile }) {
         <FormField label="Nome de exibição" required error={errors.displayName?.message}>
           {(props) => <Input {...props} autoComplete="name" {...form.register('displayName')} />}
         </FormField>
-        <FormField label="Nome de usuário" required error={errors.username?.message}>
+        <FormField label="Nome de usuário" required error={errors.username?.message} hint={fieldHelp.username}>
           {(props) => <Input {...props} autoComplete="username" {...form.register('username')} />}
         </FormField>
         <FormField label="E-mail" required error={errors.email?.message}>
           {(props) => <Input {...props} type="email" autoComplete="email" {...form.register('email')} />}
         </FormField>
-        <FormField label="Nome ENS" required error={errors.ensName?.message}>
+        <FormField label="Nome ENS" required error={errors.ensName?.message} hint={fieldHelp.ensName}>
           {(props) => (
             <Controller
               control={form.control}
@@ -213,7 +214,7 @@ function ProfileFormInner({ profile }: { profile: Profile }) {
             />
           )}
         </FormField>
-        <FormField label="Apelido da carteira" required error={errors.walletNickname?.message}>
+        <FormField label="Apelido da carteira" required error={errors.walletNickname?.message} hint={fieldHelp.nickname}>
           {(props) => <Input {...props} {...form.register('walletNickname')} />}
         </FormField>
         <AvatarField profile={profile} />

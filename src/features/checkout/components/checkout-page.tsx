@@ -36,6 +36,7 @@ import { CartNotices } from '@/features/cart/components/cart-notices'
 import { SummaryRows } from '@/features/cart/components/order-summary'
 import { useProfile, useWalletConnection, useWallets } from '@/features/account/hooks'
 import { EnsInput, NetworkSelect, WalletTypeSelect } from '@/features/account/components/fields'
+import { fieldHelp, toReferralCode } from '@/features/account/field-help'
 import { shortAddress } from '@/lib/format'
 import { createOrder } from '@/features/orders/hooks'
 import { attemptFor, clearAttempt, markAttemptDone, readAttempt, type CheckoutAttempt } from '../attempt'
@@ -467,7 +468,7 @@ export function CheckoutPage() {
               <FormField label="Nome de exibição" required error={errors.displayName?.message}>
                 {(props) => <Input {...props} autoComplete="name" {...form.register('displayName')} />}
               </FormField>
-              <FormField label="Nome de usuário" required error={errors.username?.message}>
+              <FormField label="Nome de usuário" required error={errors.username?.message} hint={fieldHelp.username}>
                 {(props) => <Input {...props} autoComplete="username" {...form.register('username')} />}
               </FormField>
               <FormField label="Rede" required error={errors.network?.message}>
@@ -479,10 +480,10 @@ export function CheckoutPage() {
                   />
                 )}
               </FormField>
-              <FormField label="Nome do perfil" required error={errors.profileName?.message}>
+              <FormField label="Nome do perfil" required error={errors.profileName?.message} hint={fieldHelp.profileName}>
                 {(props) => <Input {...props} {...form.register('profileName')} />}
               </FormField>
-              <FormField label="Endereço da carteira" required error={errors.walletAddress?.message}>
+              <FormField label="Endereço da carteira" required error={errors.walletAddress?.message} hint={fieldHelp.address}>
                 {(props) => (
                   <Input
                     {...props}
@@ -493,7 +494,13 @@ export function CheckoutPage() {
                   />
                 )}
               </FormField>
-              <FormField label="ENS ou carteira secundária (opcional)" hideLabel error={errors.secondaryAddress?.message} className="md:pt-7">
+              <FormField
+                label="ENS ou carteira secundária (opcional)"
+                hideLabel
+                error={errors.secondaryAddress?.message}
+                hint={fieldHelp.secondaryAddress}
+                className="md:pt-7"
+              >
                 {(props) => <Input {...props} placeholder="ENS ou carteira secundária (opcional)" {...form.register('secondaryAddress')} />}
               </FormField>
               <FormField label="Tipo de carteira" required error={errors.walletType?.message}>
@@ -505,13 +512,13 @@ export function CheckoutPage() {
                   />
                 )}
               </FormField>
-              <FormField label="Código de indicação" required error={errors.referralCode?.message} hint="Ex.: KURIO2026">
-                {(props) => <Input {...props} className="uppercase" {...form.register('referralCode')} />}
+              <FormField label="Código de indicação" required error={errors.referralCode?.message} hint={fieldHelp.referralCode}>
+                {(props) => <Input {...props} className="uppercase" {...form.register('referralCode', { setValueAs: toReferralCode })} />}
               </FormField>
               <FormField label="E-mail" required error={errors.email?.message}>
                 {(props) => <Input {...props} type="email" autoComplete="email" {...form.register('email')} />}
               </FormField>
-              <FormField label="Nome ENS" required error={errors.ensName?.message}>
+              <FormField label="Nome ENS" required error={errors.ensName?.message} hint={fieldHelp.ensName}>
                 {(props) => (
                   <Controller
                     control={form.control}
