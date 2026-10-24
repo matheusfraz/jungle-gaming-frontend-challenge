@@ -119,8 +119,8 @@ O Playwright sobe `pnpm dev:mocks` na porta 4173. Cada teste roda em contexto is
 
 Os relatórios HTML da última execução completa ficam versionados em `e2e/reports/`:
 
-- `e2e/reports/local`: suíte contra `pnpm dev:mocks` (113 passaram, 5 pulados).
-- `e2e/reports/producao`: a mesma suíte contra https://kurio-omega.vercel.app (113 passaram, 5 pulados), incluindo compra, falhas de pagamento e tempo real via Socket.IO no build publicado.
+- `e2e/reports/local`: suíte contra `pnpm dev:mocks` (111 passaram, 5 pulados).
+- `e2e/reports/producao`: a mesma suíte contra https://kurio-omega.vercel.app (111 passaram, 5 pulados), incluindo compra, falhas de pagamento e tempo real via Socket.IO no build publicado.
 
 Os 5 testes pulados são variantes só do desktop, cobertas de outra forma no mobile (o motivo está no `test.skip` de cada um). Como todos passaram, os relatórios não têm traces. Em uma falha, o Playwright guarda trace, screenshot e contexto do erro, e eles aparecem no relatório.
 
