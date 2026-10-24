@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Loader2, Search, XCircle } from 'lucide-react'
+import { Loader2, XCircle } from 'lucide-react'
 import type { Order } from '@/contracts/commerce'
 import { networkLabels } from '@/contracts/nft'
 import { formatEth } from '@/lib/money'
@@ -108,10 +108,14 @@ function Receipt({ order, onClose }: { order: Order; onClose: () => void }) {
                 to="/explorador/tx/$txHash"
                 params={{ txHash: order.txHash }}
                 className={buttonVariants({ size: 'lg', className: 'text-base' })}
+                aria-describedby="explorer-hint"
               >
-                <Search aria-hidden /> Ver no explorador
+                Ver no Etherscan
               </Link>
-              <p className="text-xs text-subtle">Explorador simulado: a transação existe apenas no ambiente de demonstração.</p>
+              {/* Label kept from the Figma; the destination is the simulated in-app explorer. */}
+              <p id="explorer-hint" className="text-xs text-subtle">
+                Link simulado: abre o explorador de demonstração.
+              </p>
             </div>
           ) : null}
         </div>

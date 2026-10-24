@@ -65,7 +65,7 @@ test.describe('Responsividade: sem overflow horizontal em 390, 768 e 1440 px', (
     await expect(page.getByTestId('order-receipt')).toBeVisible()
     expect(await overflowing(page)).toEqual([])
     // Simulated explorer at phone width (long hashes must wrap).
-    await page.getByRole('link', { name: 'Ver no explorador' }).click()
+    await page.getByRole('link', { name: 'Ver no Etherscan' }).click()
     await expect(page.getByTestId('explorer-transaction')).toBeVisible()
     expect(await overflowing(page)).toEqual([])
   })

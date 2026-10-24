@@ -24,10 +24,11 @@ test.describe('6. Compra completa', () => {
     await expect(receipt.getByText('Ivory Baron #088')).toBeVisible()
     await expect(receipt.getByText('(x 2)')).toBeVisible()
     await expect(receipt.getByTestId('receipt-total')).toHaveText('3.596 ETH')
-    await expect(receipt.getByRole('link', { name: 'Ver no explorador' })).toHaveAttribute(
+    await expect(receipt.getByRole('link', { name: 'Ver no Etherscan' })).toHaveAttribute(
       'href',
       /^\/explorador\/tx\/0x[a-f0-9]{64}$/,
     )
+    await expect(receipt.getByText('Link simulado: abre o explorador de demonstração.')).toBeVisible()
 
     // Purchased quantities left the cart.
     await expect(page.getByTestId('header-cart')).toHaveAttribute('aria-label', 'Carrinho, 0 itens')
@@ -38,7 +39,7 @@ test.describe('6. Compra completa', () => {
     await expect(page.getByTestId('receipt-total')).toHaveText('3.596 ETH')
 
     // The simulated explorer shows the same transaction, clearly marked as simulated.
-    await page.getByRole('link', { name: 'Ver no explorador' }).click()
+    await page.getByRole('link', { name: 'Ver no Etherscan' }).click()
     await expect(page).toHaveURL(/\/explorador\/tx\/0x[a-f0-9]{64}$/)
     await expect(page.getByTestId('explorer-notice')).toContainText('Explorador simulado.')
     await expect(page.getByTestId('explorer-hash')).toHaveText(/^0x[a-f0-9]{64}$/)
