@@ -6,14 +6,14 @@
 - Navegador de teste: Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36
 - Node v24.11.1 · win32 10.0.19045 · 13th Gen Intel(R) Core(TM) i7-13620H (16 núcleos) · 16 GB RAM
 - Throttling: simulado (mobile: Moto G Power / 4G lento; desktop: preset desktop)
-- Data: 2026-10-24T15:59:23.554Z
+- Data: 2026-10-24T18:32:48.493Z
 
 | Página | Perfil | Performance | Accessibility | Best Practices | SEO | LCP (ms) | CLS | TBT (ms) |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| Início | mobile | 92 | 100 | 100 | 100 | 3329 | 0.000 | 57 |
-| Detalhe do NFT | mobile | 94 | 100 | 100 | 100 | 2807 | 0.000 | 21 |
-| Início | desktop | 100 | 100 | 100 | 100 | 544 | 0.000 | 0 |
-| Detalhe do NFT | desktop | 100 | 100 | 100 | 100 | 611 | 0.004 | 0 |
+| Início | mobile | 91 | 100 | 100 | 100 | 3331 | 0.000 | 139 |
+| Detalhe do NFT | mobile | 93 | 100 | 100 | 100 | 2945 | 0.000 | 107 |
+| Início | desktop | 100 | 100 | 100 | 100 | 464 | 0.000 | 0 |
+| Detalhe do NFT | desktop | 100 | 100 | 100 | 100 | 643 | 0.003 | 0 |
 
 ## Abaixo da meta
 

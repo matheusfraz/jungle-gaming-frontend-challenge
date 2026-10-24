@@ -42,7 +42,13 @@ for (const profile of profiles) {
         '--chrome-flags=--headless=new --no-sandbox',
       ]
       console.log(`Lighthouse ${profile} ${page.path} (${run}/${runs})`)
-      const result = spawnSync(process.execPath, args, { encoding: 'utf8', env: process.env })
+      // Headless Chrome occasionally closes mid-run ("Target closed"); a crashed
+      // run produces no report, so it is retried once instead of aborting.
+      let result = spawnSync(process.execPath, args, { encoding: 'utf8', env: process.env })
+      if (result.status !== 0) {
+        console.log(`  falhou, repetindo: ${(result.stderr || result.stdout).split('\n')[0]}`)
+        result = spawnSync(process.execPath, args, { encoding: 'utf8', env: process.env })
+      }
       if (result.status !== 0) {
         throw new Error(`Lighthouse ${profile} ${page.path} run ${run} failed: ${result.stderr || result.stdout}`)
       }

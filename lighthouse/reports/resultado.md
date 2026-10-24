@@ -6,19 +6,19 @@
 - Navegador de teste: Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36
 - Node v24.11.1 · win32 10.0.19045 · 13th Gen Intel(R) Core(TM) i7-13620H (16 núcleos) · 16 GB RAM
 - Throttling: simulado (mobile: Moto G Power / 4G lento; desktop: preset desktop)
-- Data: 2026-10-24T15:56:31.606Z
+- Data: 2026-10-24T18:25:03.312Z
 
 | Página | Perfil | Performance | Accessibility | Best Practices | SEO | LCP (ms) | CLS | TBT (ms) |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| Início | mobile | 82 | 100 | 100 | 100 | 4563 | 0.000 | 126 |
-| Detalhe do NFT | mobile | 83 | 100 | 100 | 100 | 4093 | 0.000 | 44 |
-| Início | desktop | 100 | 100 | 100 | 100 | 707 | 0.000 | 0 |
-| Detalhe do NFT | desktop | 99 | 100 | 100 | 100 | 938 | 0.004 | 0 |
+| Início | mobile | 80 | 100 | 100 | 100 | 4620 | 0.000 | 217 |
+| Detalhe do NFT | mobile | 83 | 100 | 100 | 100 | 4138 | 0.000 | 113 |
+| Início | desktop | 100 | 100 | 100 | 100 | 687 | 0.000 | 0 |
+| Detalhe do NFT | desktop | 99 | 100 | 100 | 100 | 948 | 0.002 | 0 |
 
 ## Abaixo da meta
 
-- **Início · mobile · performance: 82** (meta 90). Principais auditorias: Largest Contentful Paint (4.6 s).
-- **Detalhe do NFT · mobile · performance: 83** (meta 90). Principais auditorias: First Contentful Paint (2.5 s); Largest Contentful Paint (4.1 s).
+- **Início · mobile · performance: 80** (meta 90). Principais auditorias: First Contentful Paint (1.8 s); Largest Contentful Paint (4.6 s); Total Blocking Time (240 ms).
+- **Detalhe do NFT · mobile · performance: 83** (meta 90). Principais auditorias: First Contentful Paint (2.5 s); Largest Contentful Paint (4.2 s).
 
 ## Análise
 

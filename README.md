@@ -351,12 +351,12 @@ LIGHTHOUSE_URL=https://kurio-omega.vercel.app LIGHTHOUSE_REPORTS=lighthouse/repo
 
 | Página | Perfil | Local (`preview:demo`) | Publicada (Vercel) |
 |---|---|---:|---:|
-| Início | mobile | 82 | 92 |
-| Detalhe do NFT | mobile | 83 | 94 |
+| Início | mobile | 80 | 91 |
+| Detalhe do NFT | mobile | 83 | 93 |
 | Início | desktop | 100 | 100 |
 | Detalhe do NFT | desktop | 99 | 100 |
 
-Valores de performance (mediana de 3 execuções). Acessibilidade, boas práticas e SEO ficaram em 100 em todos os casos. No site publicado, todas as categorias atingem a meta. A diferença vem principalmente da compressão (Brotli) e do HTTP/2 da CDN, que o `vite preview` local não aplica. A análise do mobile local está em [resultado.md](./lighthouse/reports/resultado.md).
+Valores de performance (mediana de 3 execuções). Acessibilidade, boas práticas e SEO ficaram em 100 em todos os casos. No site publicado, todas as categorias atingem a meta. A performance do início no mobile varia de 87 a 91 entre rodadas: o LCP fica estável (3,3 s), mas o TBT, simulado a partir do tempo de CPU da máquina que roda a auditoria, oscila com a carga dela. A diferença vem principalmente da compressão (Brotli) e do HTTP/2 da CDN, que o `vite preview` local não aplica. A análise do mobile local está em [resultado.md](./lighthouse/reports/resultado.md).
 
 ## Deploy (Vercel)
 
