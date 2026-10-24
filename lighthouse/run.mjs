@@ -5,14 +5,15 @@
  *
  * Usage: pnpm build:demo && pnpm preview:demo   (in one terminal)
  *        pnpm lighthouse                        (in another)
- * Env:   LIGHTHOUSE_URL (default http://127.0.0.1:4173), CHROME_PATH (optional)
+ * Env:   LIGHTHOUSE_URL (default http://127.0.0.1:4173), LIGHTHOUSE_REPORTS (output
+ *        folder, default lighthouse/reports), CHROME_PATH (optional)
  */
 import { spawnSync } from 'node:child_process'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { cpus, platform, release, totalmem } from 'node:os'
-import { resolve } from 'node:path'
+import { relative, resolve } from 'node:path'
 
-const reportsDirectory = resolve('lighthouse/reports')
+const reportsDirectory = resolve(process.env.LIGHTHOUSE_REPORTS ?? 'lighthouse/reports')
 const lighthouseCli = resolve('node_modules/lighthouse/cli/index.js')
 const baseUrl = process.env.LIGHTHOUSE_URL ?? 'http://127.0.0.1:4173'
 const pages = [
@@ -112,7 +113,7 @@ summary.push(
 )
 summary.push(
   '',
-  'Relatórios HTML/JSON de cada execução: `lighthouse/reports/<perfil>-<página>-<n>.report.{html,json}`.',
+  `Relatórios HTML/JSON de cada execução: \`${relative(process.cwd(), reportsDirectory).replaceAll('\\', '/')}/<perfil>-<página>-<n>.report.{html,json}\`.`,
   'Medições locais variam conforme hardware e carga da máquina; compare execuções feitas nas mesmas condições.',
 )
 

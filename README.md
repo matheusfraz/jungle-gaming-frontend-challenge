@@ -2,9 +2,10 @@
 
 Implementação do desafio Frontend da Jungle Gaming: descoberta, compra e conta do colecionador, desktop e mobile, com React + TypeScript, TanStack Router/Query, Axios, Socket.IO, Tailwind CSS, shadcn/ui, MSW, Playwright e Lighthouse.
 
-- **Aplicação publicada:** _adicione aqui a URL da Vercel após o deploy_
+- **Aplicação publicada:** https://kurio-omega.vercel.app (build de demonstração, com mocks e tempo real ativos)
 - **Arquitetura, contratos e decisões:** [ARCHITECTURE.md](./ARCHITECTURE.md)
-- **Resultados Lighthouse:** [lighthouse/reports/resultado.md](./lighthouse/reports/resultado.md)
+- **Resultados Lighthouse:** [local](./lighthouse/reports/resultado.md) e [aplicação publicada](./lighthouse/reports/producao/resultado.md)
+- **Relatórios Playwright (HTML):** [local](./e2e/reports/local/index.html) e [aplicação publicada](./e2e/reports/producao/index.html) — abra com `pnpm exec playwright show-report e2e/reports/local` (ou `producao`)
 
 ## Requisitos
 
@@ -116,6 +117,24 @@ pnpm test:e2e
 
 O Playwright sobe `pnpm dev:mocks` na porta 4173. Cada teste roda em contexto isolado (o "servidor" MSW nasce das fixtures), com cenário, relógio (`page.clock`), latência e eventos controlados. Relatório HTML em `playwright-report/`; traces e screenshots só das falhas em `test-results/`.
 
+Os relatórios HTML da última execução completa ficam versionados em `e2e/reports/`:
+
+- `e2e/reports/local`: suíte contra `pnpm dev:mocks` (113 passaram, 5 pulados).
+- `e2e/reports/producao`: a mesma suíte contra https://kurio-omega.vercel.app (113 passaram, 5 pulados), incluindo compra, falhas de pagamento e tempo real via Socket.IO no build publicado.
+
+Os 5 testes pulados são variantes só do desktop, cobertas de outra forma no mobile (o motivo está no `test.skip` de cada um). Como todos passaram, os relatórios não têm traces. Em uma falha, o Playwright guarda trace, screenshot e contexto do erro, e eles aparecem no relatório.
+
+Variáveis opcionais:
+
+| Variável | Efeito |
+|---|---|
+| `E2E_BASE_URL` | Roda a suíte contra uma URL publicada (build de demonstração), sem subir servidor local |
+| `E2E_REPORT` | Pasta do relatório HTML (padrão `playwright-report/`) |
+
+```sh
+E2E_BASE_URL=https://kurio-omega.vercel.app E2E_REPORT=e2e/reports/producao pnpm test:e2e
+```
+
 | Spec | Cobertura |
 |---|---|
 | `01-catalog` | busca, filtros combinados, reset de paginação, ordenação, histórico, vazio, fora de ordem |
@@ -141,9 +160,24 @@ pnpm preview:demo        # em um terminal
 pnpm lighthouse          # em outro
 ```
 
-Mede início e detalhe, mobile e desktop, 3 vezes cada, com o build de demonstração e o cenário padrão dos mocks. Gera HTML/JSON por execução e `lighthouse/reports/resultado.md` com medianas, LCP/CLS/TBT, versões, ambiente e justificativas. Configuração versionada em `lighthouse/config.mjs` (mobile) e `lighthouse/config.desktop.mjs`. Use `LIGHTHOUSE_URL` para medir o deploy.
+Mede início e detalhe, mobile e desktop, 3 vezes cada, com o build de demonstração e o cenário padrão dos mocks. Gera HTML/JSON por execução e `lighthouse/reports/resultado.md` com medianas, LCP/CLS/TBT, versões, ambiente e justificativas. Configuração versionada em `lighthouse/config.mjs` (mobile) e `lighthouse/config.desktop.mjs`. Use `LIGHTHOUSE_URL` para medir o deploy e `LIGHTHOUSE_REPORTS` para escolher a pasta de saída:
+
+```sh
+LIGHTHOUSE_URL=https://kurio-omega.vercel.app LIGHTHOUSE_REPORTS=lighthouse/reports/producao pnpm lighthouse
+```
+
+| Página | Perfil | Local (`preview:demo`) | Publicada (Vercel) |
+|---|---|---:|---:|
+| Início | mobile | 82 | 92 |
+| Detalhe do NFT | mobile | 83 | 94 |
+| Início | desktop | 100 | 100 |
+| Detalhe do NFT | desktop | 99 | 100 |
+
+Valores de performance (mediana de 3 execuções). Acessibilidade, boas práticas e SEO ficaram em 100 em todos os casos. Na Vercel, todas as categorias atingem a meta. A diferença vem principalmente da compressão (Brotli) e do HTTP/2 da CDN, que o `vite preview` local não aplica. A análise do mobile local está em [resultado.md](./lighthouse/reports/resultado.md).
 
 ## Deploy (Vercel)
+
+Publicado em **https://kurio-omega.vercel.app**. Cada push na `main` gera um novo deploy de produção.
 
 O `vercel.json` já define `pnpm build:demo`, a saída `dist`, cache dos assets e o rewrite de SPA (acesso direto e refresh de qualquer rota). Basta importar o repositório na Vercel; nenhuma variável extra é necessária.
 

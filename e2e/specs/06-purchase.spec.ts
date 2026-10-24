@@ -61,7 +61,7 @@ test.describe('6. Compra completa', () => {
 
     await addToCartFromDetail(page, 'golden-beat-207')
     await page.getByRole('button', { name: 'Conectar e finalizar' }).click()
-    await expect(page.getByText('Desconectada')).toBeVisible()
+    await expect(page.getByText('Desconectada', { exact: true })).toBeVisible()
     // No explicit "Conectar carteira" click: the main button asks the wallet to connect.
     await page.getByRole('button', { name: 'Confirmar compra', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Revise seu pedido' })).toBeVisible()

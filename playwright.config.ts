@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const PORT = 4173
+// Set E2E_BASE_URL to run the suite against a deployed demo build (no local server).
+const externalBaseUrl = process.env.E2E_BASE_URL
 
 export default defineConfig({
   testDir: './e2e',
@@ -13,11 +15,12 @@ export default defineConfig({
     timeout: 10_000,
     toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled', caret: 'hide' },
   },
-  reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
+  // E2E_REPORT picks the HTML report folder (default playwright-report, not versioned).
+  reporter: [['list'], ['html', { open: 'never', outputFolder: process.env.E2E_REPORT ?? 'playwright-report' }]],
   // Baselines are versioned per project (desktop/mobile) in e2e/visual/__screenshots__.
   snapshotPathTemplate: '{testDir}/visual/__screenshots__/{projectName}/{arg}{ext}',
   use: {
-    baseURL: `http://127.0.0.1:${PORT}`,
+    baseURL: externalBaseUrl ?? `http://127.0.0.1:${PORT}`,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     locale: 'pt-BR',
@@ -39,10 +42,12 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: `pnpm dev:mocks --host 127.0.0.1 --port ${PORT} --strictPort`,
-    url: `http://127.0.0.1:${PORT}`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: externalBaseUrl
+    ? undefined
+    : {
+        command: `pnpm dev:mocks --host 127.0.0.1 --port ${PORT} --strictPort`,
+        url: `http://127.0.0.1:${PORT}`,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 })

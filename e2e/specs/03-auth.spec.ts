@@ -119,7 +119,14 @@ test.describe('3. Cadastro, login, expiração, logout e troca de usuário', () 
       await openApp(page, '/perfil')
       await expect(page.locator('main').getByLabel('Nome de exibição')).toHaveValue('Ana Souza')
       await page.clock.fastForward(25_000)
-      await page.getByRole('button', { name: 'Salvar' }).click()
+      // A background request may hit the expired session first and redirect
+      // before the click; both paths must end on the login with reason=expired.
+      await page
+        .getByRole('button', { name: 'Salvar' })
+        .click({ timeout: 5_000 })
+        .catch((error: unknown) => {
+          if (!/reason=expired/.test(page.url())) throw error
+        })
       await expect(page).toHaveURL(/reason=expired/)
     })
   })
