@@ -162,6 +162,31 @@ export const orderSchema = z.object({
   }),
 })
 
+/* ---------- Simulated block explorer ---------- */
+
+export const txHashSchema = z.string().regex(/^0x[a-f0-9]{64}$/, 'Hash de transação inválido.')
+
+/** Public view of a confirmed purchase, as a block explorer would show it. */
+export const explorerTransactionSchema = z.object({
+  hash: txHashSchema,
+  status: z.literal('success'),
+  network: networkIdSchema,
+  blockNumber: z.number().int().positive(),
+  timestamp: z.string(),
+  from: z.string(),
+  to: z.string(),
+  valueEth: moneySchema,
+  networkFeeEth: moneySchema,
+  transfers: z.array(
+    z.object({
+      name: z.string(),
+      tokenId: z.string(),
+      editionId: editionIdSchema,
+      quantity: z.number().int().positive(),
+    }),
+  ),
+})
+
 /* ---------- Newsletter ---------- */
 
 export const newsletterInputSchema = z.object({
@@ -217,6 +242,7 @@ export type OrderStatus = z.infer<typeof orderStatusSchema>
 export type CollectorInput = z.infer<typeof collectorInputSchema>
 export type CreateOrderInput = z.infer<typeof createOrderInputSchema>
 export type Order = z.infer<typeof orderSchema>
+export type ExplorerTransaction = z.infer<typeof explorerTransactionSchema>
 export type NftUpdatedEvent = z.infer<typeof nftUpdatedEventSchema>
 export type OrderUpdatedEvent = z.infer<typeof orderUpdatedEventSchema>
 export type RealtimeEvent = NftUpdatedEvent | OrderUpdatedEvent

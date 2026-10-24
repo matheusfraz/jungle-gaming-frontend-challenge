@@ -14,12 +14,12 @@ test.describe('5. Carrinho: quantidades, remoção, cupom e persistência', () =
     const coupon = page.getByLabel('Código promocional')
     await coupon.fill('NAOEXISTE')
     await page.getByRole('button', { name: 'Aplicar' }).click()
-    await expect(page.getByText('Cupom inválido. Confira o código e tente novamente.')).toBeVisible()
+    await expect(page.locator('#coupon-error')).toHaveText('Cupom inválido. Confira o código e tente novamente.')
     await expect(coupon).toHaveAttribute('aria-invalid', 'true')
 
     await coupon.fill('VERAO2025')
     await page.getByRole('button', { name: 'Aplicar' }).click()
-    await expect(page.getByText('Este cupom expirou.')).toBeVisible()
+    await expect(page.locator('#coupon-error')).toHaveText('Este cupom expirou.')
 
     await coupon.fill('kurio10')
     await page.getByRole('button', { name: 'Aplicar' }).click()

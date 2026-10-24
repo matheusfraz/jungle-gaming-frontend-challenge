@@ -26,6 +26,7 @@ import { Route as AuthenticatedPerfilIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedPerfilSectionRouteImport } from './routes/_authenticated/perfil.$section'
 import { Route as AuthenticatedPerfilCarteirasRouteImport } from './routes/_authenticated/perfil.carteiras'
 import { Route as AuthenticatedPerfilFavoritosRouteImport } from './routes/_authenticated/perfil.favoritos'
+import { Route as ExploradorTxTxHashRouteImport } from './routes/explorador.tx.$txHash'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -116,6 +117,11 @@ const AuthenticatedPerfilFavoritosRoute =
     path: '/favoritos',
     getParentRoute: () => AuthenticatedPerfilRoute,
   } as any)
+const ExploradorTxTxHashRoute = ExploradorTxTxHashRouteImport.update({
+  id: '/explorador/tx/$txHash',
+  path: '/explorador/tx/$txHash',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/perfil/$section': typeof AuthenticatedPerfilSectionRoute
   '/perfil/carteiras': typeof AuthenticatedPerfilCarteirasRoute
   '/perfil/favoritos': typeof AuthenticatedPerfilFavoritosRoute
+  '/explorador/tx/$txHash': typeof ExploradorTxTxHashRoute
   '/perfil/': typeof AuthenticatedPerfilIndexRoute
 }
 export interface FileRoutesByTo {
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/perfil/$section': typeof AuthenticatedPerfilSectionRoute
   '/perfil/carteiras': typeof AuthenticatedPerfilCarteirasRoute
   '/perfil/favoritos': typeof AuthenticatedPerfilFavoritosRoute
+  '/explorador/tx/$txHash': typeof ExploradorTxTxHashRoute
   '/perfil': typeof AuthenticatedPerfilIndexRoute
 }
 export interface FileRoutesById {
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/_authenticated/perfil/$section': typeof AuthenticatedPerfilSectionRoute
   '/_authenticated/perfil/carteiras': typeof AuthenticatedPerfilCarteirasRoute
   '/_authenticated/perfil/favoritos': typeof AuthenticatedPerfilFavoritosRoute
+  '/explorador/tx/$txHash': typeof ExploradorTxTxHashRoute
   '/_authenticated/perfil/': typeof AuthenticatedPerfilIndexRoute
 }
 export interface FileRouteTypes {
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/perfil/$section'
     | '/perfil/carteiras'
     | '/perfil/favoritos'
+    | '/explorador/tx/$txHash'
     | '/perfil/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/perfil/$section'
     | '/perfil/carteiras'
     | '/perfil/favoritos'
+    | '/explorador/tx/$txHash'
     | '/perfil'
   id:
     | '__root__'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/_authenticated/perfil/$section'
     | '/_authenticated/perfil/carteiras'
     | '/_authenticated/perfil/favoritos'
+    | '/explorador/tx/$txHash'
     | '/_authenticated/perfil/'
   fileRoutesById: FileRoutesById
 }
@@ -240,6 +252,7 @@ export interface RootRouteChildren {
   EntrarRoute: typeof EntrarRoute
   MercadoRoute: typeof MercadoRoute
   NftNftIdRoute: typeof NftNftIdRoute
+  ExploradorTxTxHashRoute: typeof ExploradorTxTxHashRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -363,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilFavoritosRouteImport
       parentRoute: typeof AuthenticatedPerfilRoute
     }
+    '/explorador/tx/$txHash': {
+      id: '/explorador/tx/$txHash'
+      path: '/explorador/tx/$txHash'
+      fullPath: '/explorador/tx/$txHash'
+      preLoaderRoute: typeof ExploradorTxTxHashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -410,6 +430,7 @@ const rootRouteChildren: RootRouteChildren = {
   EntrarRoute: EntrarRoute,
   MercadoRoute: MercadoRoute,
   NftNftIdRoute: NftNftIdRoute,
+  ExploradorTxTxHashRoute: ExploradorTxTxHashRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

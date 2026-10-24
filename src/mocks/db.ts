@@ -444,6 +444,17 @@ export function toOrder(record: OrderRecord): Order {
   }
 }
 
+/** Deterministic transaction hash in the real Ethereum format: 0x + 64 hex chars. */
+export function simulatedTxHash(order: { id: string; idempotencyKey: string }): string {
+  const hex = [0, 1, 2, 3, 4].map((part) => stableHash({ id: order.id, key: order.idempotencyKey, part })).join('')
+  return `0x${hex.slice(0, 64).toLowerCase()}`
+}
+
+/** Block number derived from the hash, so the explorer shows stable data. */
+export function simulatedBlockNumber(txHash: string): number {
+  return 6_000_000 + (parseInt(txHash.slice(2, 8), 16) % 900_000)
+}
+
 export function settleOrder(orderId: string): void {
   const order = db.orders[orderId]
   if (!order || order.status !== 'pending') return
@@ -452,10 +463,11 @@ export function settleOrder(orderId: string): void {
   order.updatedAt = now
 
   if (order.outcome === 'confirmed') {
-    const txHash = `0x${stableHash({ id: order.id, k: order.idempotencyKey })}${stableHash(order.id).slice(0, 10)}`
+    const txHash = simulatedTxHash(order)
     order.status = 'confirmed'
     order.txHash = txHash
-    order.explorerUrl = `https://sepolia.etherscan.io/tx/${txHash}`
+    // Simulated in-app explorer: the transaction does not exist on a real network.
+    order.explorerUrl = `/explorador/tx/${txHash}`
     // Remove exactly the purchased quantities from the buyer's cart.
     const cart = getCartRecord(order.cartOwner)
     for (const line of order.lines) {

@@ -120,7 +120,7 @@ O Playwright sobe `pnpm dev:mocks` na porta 4173. Cada teste roda em contexto is
 | `03-auth` | cadastro (validação e conflito), login, retorno ao fluxo, expiração (controle e relógio), logout, troca de usuário |
 | `04-favorites` | visitante, persistência, falha + rollback + nova tentativa |
 | `05-cart` | quantidades, limites, cupom inválido/expirado/válido, remoção, persistência e merge no login |
-| `06-purchase` | do catálogo ao recibo; recibo como snapshot; remoção só do que foi comprado |
+| `06-purchase` | do catálogo ao recibo; recibo como snapshot; explorador simulado; remoção só do que foi comprado |
 | `07-payment-failures` | pagamento recusado, clique repetido, timeout + mesma chave, carteira recusada/desconexão |
 | `08-account` | perfil (validação e conflito), avatar, senha, carteiras principal/secundária com erros da API |
 | `09-realtime-checkout` | preço/estoque via Socket.IO no carrinho e na revisão; `QUOTE_STALE` e esgotamento no servidor |

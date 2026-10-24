@@ -1,6 +1,6 @@
 import { delay, http, HttpResponse } from 'msw'
 import { collectorFormSchema } from '@/contracts/checkout'
-import { createOrderInputSchema } from '@/contracts/commerce'
+import { createOrderInputSchema, txHashSchema, type ExplorerTransaction } from '@/contracts/commerce'
 import { walletTypeLabels } from '@/contracts/account'
 import {
   buildQuote,
@@ -13,6 +13,7 @@ import {
   saveDb,
   scheduleSettlement,
   settleOrder,
+  simulatedBlockNumber,
   stableHash,
   toOrder,
   updateNft,
@@ -22,6 +23,9 @@ import { addMoney } from '@/lib/money'
 
 /** The client gives up after 6 s; the timeout scenario answers after this. */
 const TIMEOUT_SCENARIO_DELAY_MS = 9000
+
+/** Fictitious marketplace contract shown as the transaction recipient. */
+const MARKETPLACE_CONTRACT = `0x${[stableHash('kurio'), stableHash('market'), stableHash('contract')].join('').slice(0, 40)}`
 
 export const orderHandlers = [
   http.post(
@@ -160,6 +164,37 @@ export const orderHandlers = [
       if (order.userId !== user.id) return apiError(403, 'FORBIDDEN', 'Você não tem permissão para ver este pedido.')
       if (order.status === 'pending' && order.settleAt <= Date.now()) settleOrder(order.id)
       return HttpResponse.json(toOrder(db.orders[order.id]))
+    }),
+  ),
+
+  /** Public, read-only view used by the simulated block explorer. */
+  http.get(
+    `${API}/explorer/tx/:hash`,
+    withNetwork(({ params }) => {
+      const hash = txHashSchema.safeParse(String(params.hash).toLowerCase())
+      if (!hash.success) return apiError(422, 'VALIDATION_ERROR', 'Hash de transação inválido.')
+      const order = Object.values(db.orders).find((entry) => entry.txHash === hash.data)
+      if (!order || order.status !== 'confirmed') {
+        return apiError(404, 'NOT_FOUND', 'Transação não encontrada no explorador simulado.')
+      }
+      const body: ExplorerTransaction = {
+        hash: hash.data,
+        status: 'success',
+        network: order.network,
+        blockNumber: simulatedBlockNumber(hash.data),
+        timestamp: order.updatedAt,
+        from: order.wallet.address,
+        to: MARKETPLACE_CONTRACT,
+        valueEth: order.totalEth,
+        networkFeeEth: order.networkFeeEth,
+        transfers: order.lines.map((line) => ({
+          name: line.name,
+          tokenId: line.tokenId,
+          editionId: line.editionId,
+          quantity: line.quantity,
+        })),
+      }
+      return HttpResponse.json(body)
     }),
   ),
 ]

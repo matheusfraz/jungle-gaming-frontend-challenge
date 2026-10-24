@@ -70,6 +70,7 @@ No cliente, falhas de rede viram `NETWORK_ERROR`, timeouts `TIMEOUT` e cancelame
 | Perfil | `GET/PATCH /profile` · `POST/DELETE /profile/avatar` · `POST /profile/password` | Bearer | `Profile` / `204` |
 | Carteiras | `GET /wallets` · `PUT /wallets/:slot` (`primary`/`secondary`) · `POST /wallets/secondary/same-as-primary` | Bearer | `{ primary, secondary, secondarySameAsPrimary, connections }` |
 | | `POST /wallets/:id/connect` · `POST /wallets/:id/disconnect` | `{ network }` | `{ walletId, status, network, address }` |
+| Explorador | `GET /explorer/tx/:hash` | público; `hash` = `0x` + 64 hex | `ExplorerTransaction` (status, bloco, data, de/para, valor, taxa, tokens) · `404` se não houver pedido confirmado com esse hash |
 | Newsletter | `POST /newsletter` | `{ email }` | `201` |
 
 **Idempotência de pedidos:** a chave é escopada por usuário. Mesma chave + mesmo corpo (hash) ⇒ devolve o mesmo pedido (200). Mesma chave + corpo diferente ⇒ `409 IDEMPOTENCY_CONFLICT`. Antes de criar, o servidor **recalcula a cotação**: se o hash mudou (preço, taxa, cupom) responde `QUOTE_STALE`; se faltou estoque, `AVAILABILITY_CONFLICT`. Ao criar, reserva as unidades; o pedido fica `pending` e depois vira `confirmed` (remove do carrinho **apenas** as quantidades compradas) ou `rejected` (devolve a reserva; carrinho intacto). `confirmed` e `rejected` são terminais.
@@ -87,7 +88,7 @@ Todos carregam **identidade estável** (`id`), **recurso** (`resource: { type, i
 // order.updated — estado do pedido (entregue só ao dono)
 { id: 'evt_000124', type: 'order.updated', occurredAt, version: 2, userId: 'usr_ana',
   resource: { type: 'order', id: 'ord_…' },
-  data: { status: 'confirmed', txHash: '0x…', explorerUrl: 'https://sepolia.etherscan.io/tx/0x…', rejectionReason: null } }
+  data: { status: 'confirmed', txHash: '0x…', explorerUrl: '/explorador/tx/0x…', rejectionReason: null } }
 ```
 
 Eventos de controle: o cliente envia `session:subscribe { token }` / `session:unsubscribe`; o servidor responde `session:subscribed { userId }`.
@@ -182,7 +183,7 @@ Link "Pular para o conteúdo"; foco movido para `<main>` a cada navegação; di�
 - **Login/Cadastro** são rotas (`/entrar`, `/cadastro`) renderizadas como diálogo sobre a home, como nos frames. Login social e "Esqueceu a senha?" informam que não estão disponíveis (não simulam sucesso).
 - **Confirmação** é um diálogo de recibo; antes dele há os estados "aguardando confirmação" e "pagamento recusado", que não estavam desenhados.
 - **Pagamento**: a etapa de **revisão** foi adicionada antes do envio; as opções de carteira mostram as carteiras **cadastradas** do usuário com o estado de conexão; "Usar outra carteira?" permite receber em outro endereço pagando com a carteira selecionada.
-- **"Ver no Etherscan"** abre um link simulado (Sepolia) e a interface avisa que a transação existe só na demonstração.
+- **"Ver no Etherscan"** virou **"Ver no explorador"**: as compras são simuladas, então a transação não existe numa rede pública e um link para o Etherscan cairia numa página de erro. O botão abre `/explorador/tx/<hash>`, um explorador **simulado** dentro do app (sem a marca do Etherscan e identificado como simulação), com status, bloco, carteira, contrato, valor, taxa e tokens transferidos. O hash segue o formato real (`0x` + 64 hex) e é determinístico por pedido.
 - Páginas editoriais (Criadores, Aprenda, Central de ajuda) e as seções Atividade, Ofertas, Arquivos, Suporte, Minha coleção e Estúdio aparecem como "Em breve". "Lista de interesse" foi implementada (favoritos).
 - Desconto exibido como "(-) 0.00 ETH" (o Figma mostra "(-) 00.00").
 - **Acessibilidade**: textos de corpo usam um laranja um pouco mais claro (`#d79a63`) para manter contraste AA; os pontos de carrossel ganharam área de toque de 24 px sem mudar o visual.

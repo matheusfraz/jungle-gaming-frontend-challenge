@@ -24,7 +24,10 @@ test.describe('6. Compra completa', () => {
     await expect(receipt.getByText('Ivory Baron #088')).toBeVisible()
     await expect(receipt.getByText('(x 2)')).toBeVisible()
     await expect(receipt.getByTestId('receipt-total')).toHaveText('3.596 ETH')
-    await expect(receipt.getByRole('link', { name: /Ver no Etherscan/ })).toHaveAttribute('href', /etherscan\.io\/tx\/0x/)
+    await expect(receipt.getByRole('link', { name: 'Ver no explorador' })).toHaveAttribute(
+      'href',
+      /^\/explorador\/tx\/0x[a-f0-9]{64}$/,
+    )
 
     // Purchased quantities left the cart.
     await expect(page.getByTestId('header-cart')).toHaveAttribute('aria-label', 'Carrinho, 0 itens')
@@ -33,6 +36,23 @@ test.describe('6. Compra completa', () => {
     await mocks.updateNft('ivory-baron-088', { priceEth: '9.99' })
     await page.reload()
     await expect(page.getByTestId('receipt-total')).toHaveText('3.596 ETH')
+
+    // The simulated explorer shows the same transaction, clearly marked as simulated.
+    await page.getByRole('link', { name: 'Ver no explorador' }).click()
+    await expect(page).toHaveURL(/\/explorador\/tx\/0x[a-f0-9]{64}$/)
+    await expect(page.getByTestId('explorer-notice')).toContainText('Explorador simulado.')
+    await expect(page.getByTestId('explorer-hash')).toHaveText(/^0x[a-f0-9]{64}$/)
+    const transaction = page.getByTestId('explorer-transaction')
+    await expect(transaction).toContainText('Sucesso')
+    await expect(transaction).toContainText('3.596 ETH')
+    await expect(transaction).toContainText('Ivory Baron #088')
+  })
+
+  test('explorador simulado trata hash inexistente', async ({ page }) => {
+    await openApp(page, `/explorador/tx/0x${'a'.repeat(64)}`)
+    await expect(page.getByRole('heading', { name: 'Transação não encontrada' })).toBeVisible()
+    await openApp(page, '/explorador/tx/0x123')
+    await expect(page.getByRole('heading', { name: 'Transação não encontrada' })).toBeVisible()
   })
 
   test('remove do carrinho só os itens e quantidades comprados', async ({ page, mocks }) => {
