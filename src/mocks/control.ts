@@ -60,6 +60,10 @@ export const mockControl = {
     for (const session of Object.values(db.sessions)) session.expiresAt = Date.now() - 1
   },
   settleOrders: settleAllNow,
+  /** Simulated inbox: e-mails "sent" by the mock server (most recent last). */
+  inbox(email?: string) {
+    return db.outbox.filter((message) => !email || message.to === email.toLowerCase())
+  },
   listOrders() {
     return Object.values(db.orders).map((order) => ({ id: order.id, status: order.status, userId: order.userId }))
   },

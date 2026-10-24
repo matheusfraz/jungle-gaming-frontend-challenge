@@ -54,8 +54,11 @@ test.describe('7. Falha de pagamento, clique repetido e timeout', () => {
       await page.getByRole('button', { name: 'Conectar carteira' }).click()
       await expect(page.getByRole('region', { name: 'Carteira e rede' }).getByRole('alert')).toContainText('A conexão foi recusada na carteira')
 
-      // Cannot move on without a connected wallet.
+      // "Confirmar compra" asks the wallet again; a new refusal keeps the user on the form.
+      const refused = page.waitForResponse((response) => response.url().includes('/connect'))
       await page.getByRole('button', { name: 'Confirmar compra', exact: true }).click()
+      expect((await refused).status()).toBe(403)
+      await expect(page.getByRole('region', { name: 'Carteira e rede' }).getByRole('alert')).toContainText('A conexão foi recusada na carteira')
       await expect(page.getByRole('heading', { name: 'Revise seu pedido' })).toHaveCount(0)
 
       await mocks.setScenario('instant')

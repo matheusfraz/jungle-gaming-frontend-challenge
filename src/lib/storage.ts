@@ -42,4 +42,5 @@ export const storageKeys = {
   guestCartId: 'kurio:guest-cart-id',
   checkoutDraft: 'kurio:checkout-draft',
   checkoutAttempt: 'kurio:checkout-attempt',
+  pendingSignup: 'kurio:pending-signup',
 } as const

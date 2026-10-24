@@ -3,7 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { loginInputSchema, registerInputSchema, type LoginInput, type RegisterInput } from '@/contracts/account'
+import { loginInputSchema, type LoginInput } from '@/contracts/account'
 import { applyServerErrors } from '@/lib/forms'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -13,9 +13,10 @@ import { FormField } from '@/components/common/form-field'
 import { FacebookColorIcon, GoogleIcon } from '@/components/common/icons'
 import { InlineAlert } from '@/components/common/states'
 import { announce } from '@/components/feedback/announce'
-import { useLogin, useRegister } from '../session'
+import { useLogin } from '../session'
 import { isProtectedPath } from '../use-session-watcher'
 import { PasswordInput } from './password-input'
+import { RegisterFlow } from './register-flow'
 
 type Mode = 'login' | 'register'
 
@@ -101,55 +102,6 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   )
 }
 
-function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
-  const register = useRegister()
-  const [formError, setFormError] = useState<string>()
-  const form = useForm<RegisterInput>({
-    resolver: zodResolver(registerInputSchema),
-    defaultValues: { username: '', email: '', password: '', confirmPassword: '' },
-  })
-  const { errors } = form.formState
-
-  const submit = form.handleSubmit((values) => {
-    setFormError(undefined)
-    register.mutate(values, {
-      onSuccess: () => {
-        announce('Conta criada com sucesso.')
-        toast.success('Conta criada! Você já está conectado.')
-        onSuccess()
-      },
-      onError: (error) => {
-        const message = applyServerErrors(error, form.setError, ['username', 'email', 'password', 'confirmPassword'])
-        setFormError(message ?? 'Já existe uma conta com esses dados. Revise os campos destacados.')
-        announce(message ?? 'Já existe uma conta com esses dados.', 'assertive')
-      },
-    })
-  })
-
-  return (
-    <form onSubmit={submit} noValidate className="flex flex-col gap-4" aria-label="Criar conta">
-      {formError ? <InlineAlert tone="error">{formError}</InlineAlert> : null}
-      <FormField label="Nome de usuário" required error={errors.username?.message} hint="Letras minúsculas, números e _." hideLabel>
-        {(props) => <Input {...props} autoComplete="username" placeholder="Nome de usuário" {...form.register('username')} />}
-      </FormField>
-      <FormField label="E-mail" required error={errors.email?.message} hideLabel>
-        {(props) => <Input {...props} type="email" autoComplete="email" placeholder="Digite seu e-mail" {...form.register('email')} />}
-      </FormField>
-      <FormField label="Senha" required error={errors.password?.message} hint="Mínimo de 8 caracteres, com letras e números." hideLabel>
-        {(props) => <PasswordInput {...props} autoComplete="new-password" placeholder="Senha" {...form.register('password')} />}
-      </FormField>
-      <FormField label="Confirmar senha" required error={errors.confirmPassword?.message} hideLabel>
-        {(props) => (
-          <PasswordInput {...props} autoComplete="new-password" placeholder="Confirmar senha" {...form.register('confirmPassword')} />
-        )}
-      </FormField>
-      <Button type="submit" size="lg" className="h-11 text-sm" disabled={register.isPending}>
-        {register.isPending ? 'Criando conta…' : 'Criar conta'}
-      </Button>
-    </form>
-  )
-}
-
 export function AuthDialog({ mode, redirect, reason }: { mode: Mode; redirect?: string; reason?: 'expired' }) {
   const navigate = useNavigate()
 
@@ -192,12 +144,12 @@ export function AuthDialog({ mode, redirect, reason }: { mode: Mode; redirect?: 
         <DialogDescription className="text-center text-xs text-foreground">
           {mode === 'login'
             ? 'Entre para gerenciar sua carteira, coleção e perfil de criador.'
-            : 'Crie seu perfil de colecionador e conecte uma carteira quando quiser.'}
+            : 'Crie seu perfil de colecionador. Vamos confirmar seu e-mail com um código.'}
         </DialogDescription>
         {reason === 'expired' ? (
           <InlineAlert tone="warning">Sua sessão expirou. Entre novamente para continuar de onde parou.</InlineAlert>
         ) : null}
-        {mode === 'login' ? <LoginForm onSuccess={finish} /> : <RegisterForm onSuccess={finish} />}
+        {mode === 'login' ? <LoginForm onSuccess={finish} /> : <RegisterFlow onSuccess={finish} />}
         <SocialButtons />
       </DialogContent>
     </Dialog>

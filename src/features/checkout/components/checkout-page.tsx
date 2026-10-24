@@ -226,12 +226,19 @@ export function CheckoutPage() {
         setWalletError('Selecione uma carteira cadastrada para pagar.')
         return
       }
-      if (connection !== 'connected') {
-        setWalletError('Conecte a carteira selecionada para continuar.')
-        announce('Conecte a carteira selecionada para continuar.', 'assertive')
-        return
-      }
       setWalletError(undefined)
+      if (connection !== 'connected') {
+        // Ask the (simulated) wallet to connect, as a real dApp would, instead
+        // of stopping the user with an error. A refusal is still reported.
+        try {
+          await connect.mutateAsync({ walletId: selectedWallet.id, network: form.getValues('network') })
+          announce(`${walletTypeLabels[selectedWallet.walletType]} conectada.`)
+        } catch (error) {
+          setWalletError(errorMessage(error))
+          announce(errorMessage(error), 'assertive')
+          return
+        }
+      }
       setChangedNotice(null)
       await goToReview()
     },
@@ -751,9 +758,13 @@ export function CheckoutPage() {
               form="collector-form"
               size="lg"
               className="h-12 text-base"
-              disabled={quoteMutation.isPending || cart.isPending}
+              disabled={quoteMutation.isPending || connect.isPending || cart.isPending}
             >
-              {quoteMutation.isPending ? 'Revalidando valores…' : 'Confirmar compra'}
+              {connect.isPending
+                ? 'Conectando carteira…'
+                : quoteMutation.isPending
+                  ? 'Revalidando valores…'
+                  : 'Confirmar compra'}
             </Button>
           ) : (
             <Button
@@ -776,7 +787,7 @@ export function CheckoutPage() {
           )}
           <p id="confirm-hint" className="text-center text-xs text-subtle">
             {step === 'form'
-              ? 'Você revisará o pedido antes do envio.'
+              ? 'Se a carteira estiver desconectada, pediremos a conexão. Você revisará o pedido antes do envio.'
               : 'Ao confirmar, a carteira simulada autoriza o pagamento na rede.'}
           </p>
         </aside>

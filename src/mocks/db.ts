@@ -41,8 +41,29 @@ interface WalletBook {
   secondarySameAsPrimary: boolean
 }
 
+export interface PendingSignupRecord {
+  id: string
+  username: string
+  email: string
+  salt: string
+  passwordHash: string
+  codeHash: string
+  attempts: number
+  expiresAt: number
+  resendAvailableAt: number
+}
+
+/** E-mails the mock "server" sends; shown in the simulated inbox (Mocks panel). */
+export interface OutboxMessage {
+  id: string
+  to: string
+  subject: string
+  code: string
+  sentAt: string
+}
+
 export interface MockDb {
-  schema: 3
+  schema: 4
   nfts: Record<string, NftRecord>
   nftOrder: string[]
   users: Record<string, UserRecord>
@@ -58,6 +79,8 @@ export interface MockDb {
   /** Scenario side effects already consumed (e.g. "price changed once"). */
   consumed: string[]
   newsletter: string[]
+  pendingSignups: Record<string, PendingSignupRecord>
+  outbox: OutboxMessage[]
 }
 
 const DB_KEY = 'kurio:mock-db'
@@ -66,7 +89,7 @@ const SCENARIO_KEY = 'kurio:mock-scenario'
 function seed(): MockDb {
   const nfts = buildNftFixtures()
   return {
-    schema: 3,
+    schema: 4,
     nfts: Object.fromEntries(nfts.map((nft) => [nft.id, nft])),
     nftOrder: nfts.map((nft) => nft.id),
     users: Object.fromEntries(buildUserFixtures().map((user) => [user.id, user])),
@@ -81,6 +104,8 @@ function seed(): MockDb {
     eventSeq: 0,
     consumed: [],
     newsletter: [],
+    pendingSignups: {},
+    outbox: [],
   }
 }
 
@@ -89,7 +114,7 @@ function load(): MockDb {
     const raw = window.localStorage.getItem(DB_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as MockDb
-      if (parsed.schema === 3) return parsed
+      if (parsed.schema === 4) return parsed
     }
   } catch {
     /* corrupted or unavailable storage: fall back to fixtures */
@@ -177,6 +202,25 @@ export function nextEventId(): string {
   db.eventSeq += 1
   saveDb()
   return `evt_${String(db.eventSeq).padStart(6, '0')}`
+}
+
+/* ---------- Simulated e-mail ---------- */
+
+const outboxListeners = new Set<(message: OutboxMessage) => void>()
+
+export function onOutboxMessage(listener: (message: OutboxMessage) => void): () => void {
+  outboxListeners.add(listener)
+  return () => {
+    outboxListeners.delete(listener)
+  }
+}
+
+export function sendMail(message: Omit<OutboxMessage, 'id' | 'sentAt'>): OutboxMessage {
+  const full: OutboxMessage = { ...message, id: `mail_${db.outbox.length + 1}`, sentAt: new Date().toISOString() }
+  db.outbox = [...db.outbox, full].slice(-20)
+  saveDb()
+  outboxListeners.forEach((listener) => listener(full))
+  return full
 }
 
 /* ---------- Projections ---------- */

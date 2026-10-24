@@ -49,6 +49,29 @@ test.describe('6. Compra completa', () => {
     await expect(transaction).toContainText('Ivory Baron #088')
   })
 
+  test('carteira recém-cadastrada: "Confirmar compra" pede a conexão e segue para a revisão', async ({ page, mocks }) => {
+    await login(page, USERS.bruno)
+    await openApp(page, '/perfil/carteiras')
+    await page.getByRole('button', { name: 'Adicionar' }).first().click()
+    const primary = page.getByTestId('wallet-form-primary')
+    await primary.getByLabel('Endereço da carteira').fill('0x1111111111111111111111111111111111111111')
+    await primary.getByLabel('Código de indicação').fill('KURIO2026')
+    await primary.getByRole('button', { name: 'Salvar carteira' }).click()
+    await expect(page.getByText('Carteira principal salva.').first()).toBeVisible()
+
+    await addToCartFromDetail(page, 'golden-beat-207')
+    await page.getByRole('button', { name: 'Conectar e finalizar' }).click()
+    await expect(page.getByText('Desconectada')).toBeVisible()
+    // No explicit "Conectar carteira" click: the main button asks the wallet to connect.
+    await page.getByRole('button', { name: 'Confirmar compra', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Revise seu pedido' })).toBeVisible()
+    await expect(page.getByText(/conectada em/)).toBeVisible()
+    await confirmButton(page).click()
+    await expect(page.getByTestId('order-pending')).toBeVisible()
+    await mocks.settleOrders()
+    await expect(page.getByTestId('order-receipt')).toBeVisible()
+  })
+
   test('explorador simulado trata hash inexistente', async ({ page }) => {
     await openApp(page, `/explorador/tx/0x${'a'.repeat(64)}`)
     await expect(page.getByRole('heading', { name: 'Transação não encontrada' })).toBeVisible()

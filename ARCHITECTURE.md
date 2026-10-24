@@ -44,6 +44,8 @@ Formato único (`apiErrorSchema`): `{ code, message, fieldErrors?, details? }`.
 | 409 | `IDEMPOTENCY_CONFLICT` | mesma `Idempotency-Key` com corpo diferente |
 | 409 | `WALLET_NOT_CONNECTED` | pedido sem carteira conectada |
 | 422 | `COUPON_INVALID` · `COUPON_EXPIRED` | cupom |
+| 422 | `CODE_INVALID` · `CODE_EXPIRED` | código de confirmação de e-mail errado, expirado ou com tentativas esgotadas |
+| 429 | `RATE_LIMITED` | reenvio de código antes do intervalo mínimo (`details.retryAfterSeconds`) |
 | 5xx | `TRANSIENT` · `INTERNAL` | falha transitória |
 
 No cliente, falhas de rede viram `NETWORK_ERROR`, timeouts `TIMEOUT` e cancelamentos `CANCELED` (`ApiRequestError.isTransient` decide o que pode ser repetido).
@@ -52,7 +54,9 @@ No cliente, falhas de rede viram `NETWORK_ERROR`, timeouts `TIMEOUT` e cancelame
 
 | Recurso | Método e rota | Corpo / parâmetros | Resposta |
 |---|---|---|---|
-| Sessão | `POST /auth/register` | `{ username, email, password, confirmPassword }` | `201 { token, session }` |
+| Sessão | `POST /auth/register` | `{ username, email, password, confirmPassword }` | `202 { verificationId, email, expiresAt, resendAvailableAt }` — envia o código; a conta ainda não existe |
+| | `POST /auth/register/verify` | `{ verificationId, code }` | `201 { token, session }` — cria a conta e abre a sessão |
+| | `POST /auth/register/resend` | `{ verificationId }` | novo código (intervalo mínimo de 30 s) |
 | | `POST /auth/login` | `{ email, password }` | `{ token, session }` |
 | | `GET /auth/session` | Bearer | `{ user, expiresAt }` |
 | | `POST /auth/logout` | Bearer | `204` |
@@ -107,7 +111,8 @@ Aplicação no cache (`use-realtime-sync.ts`): `nft.updated` atualiza detalhe e 
 
 ## 4. Sessão e autenticação
 
-- Login/cadastro devolvem um **token bearer** guardado em `localStorage` (`kurio:token`), o único segredo no navegador. Senhas nunca são guardadas em claro: no mock ficam como `SHA-256(salt:senha)` com salt por usuário.
+- **Cadastro com confirmação de e-mail:** o formulário valida os campos e conflitos; a API então envia um código de 6 dígitos para o e-mail e só cria a conta quando o código é confirmado. O código vale 10 minutos, aceita 5 tentativas e pode ser reenviado a cada 30 s; no servidor fica guardado só o hash. A etapa pendente fica em `sessionStorage` (sobrevive a refresh). Como não há envio real de e-mails, o mock entrega a mensagem numa **caixa de entrada simulada** (painel Mocks, com aviso na tela) e `window.__kurioMocks.inbox(email)` a expõe aos testes.
+- Login e a confirmação do cadastro devolvem um **token bearer** guardado em `localStorage` (`kurio:token`), o único segredo no navegador. Senhas nunca são guardadas em claro: no mock ficam como `SHA-256(salt:senha)` com salt por usuário.
 - `GET /auth/session` (query `['session']`) recupera a sessão após refresh; 401 limpa o token.
 - **Rotas privadas** (`/pagamento`, `/pedido/:id`, `/perfil/*`): `beforeLoad` em `_authenticated` redireciona para `/entrar?redirect=<href>`. Login retorna ao `redirect` (só caminhos relativos são aceitos).
 - **Expiração**: qualquer 401 com token dispara `onSessionInvalid` → a sessão é encerrada, os dados privados saem do cache e, se a tela for privada, o usuário vai para `/entrar?redirect=…&reason=expired`. O rascunho do checkout fica em `sessionStorage` e o carrinho no servidor, então nada se perde na retomada.
@@ -139,7 +144,7 @@ Aplicação no cache (`use-realtime-sync.ts`): `nft.updated` atualiza detalhe e 
 ## 7. Pagamento: revisão, idempotência e recuperação
 
 1. Formulário "Perfil do colecionador" (validação zod igual à do servidor), pré-preenchido pela carteira principal e pelo perfil; rascunho persistido em `sessionStorage`.
-2. Seleção de carteira cadastrada + **conexão simulada** (aprovar, recusar no cenário `wallet-rejected`, desconectar).
+2. Seleção de carteira cadastrada + **conexão simulada** (aprovar, recusar no cenário `wallet-rejected`, desconectar). Se a carteira estiver desconectada, "Confirmar compra" pede a conexão antes de seguir, como um dApp real; uma recusa mantém o usuário no formulário com o erro.
 3. "Confirmar compra" gera uma **cotação nova** e abre a **revisão**.
 4. "Confirmar compra · total" cria uma *tentativa* (`attempt.ts`): chave de idempotência ligada ao payload exato, salva em `sessionStorage` antes do envio. Botão desabilitado + trava em ref impedem cliques repetidos.
 5. Timeout/erro de rede: reenvio automático com a mesma chave; refresh no meio do envio: ao voltar ao checkout a tentativa enviada é reenviada e recupera o mesmo pedido.

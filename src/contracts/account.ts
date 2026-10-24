@@ -67,6 +67,29 @@ export const registerInputSchema = z
     message: 'As senhas não coincidem.',
   })
 
+/* ---------- E-mail verification (sign-up) ---------- */
+
+/** POST /auth/register answers 202 with this: the account only exists after the code is confirmed. */
+export const pendingSignupSchema = z.object({
+  verificationId: z.string(),
+  email: z.string(),
+  expiresAt: z.string(),
+  resendAvailableAt: z.string(),
+})
+
+export const verifySignupInputSchema = z.object({
+  verificationId: z.string().min(1),
+  code: z
+    .string()
+    .trim()
+    .min(1, 'Digite o código que enviamos para o seu e-mail.')
+    .regex(/^\d{6}$/, 'O código tem 6 dígitos.'),
+})
+
+export const resendSignupInputSchema = z.object({
+  verificationId: z.string().min(1),
+})
+
 /* ---------- Profile ---------- */
 
 export const profileSchema = z.object({
@@ -173,6 +196,8 @@ export type Session = z.infer<typeof sessionSchema>
 export type AuthResponse = z.infer<typeof authResponseSchema>
 export type LoginInput = z.infer<typeof loginInputSchema>
 export type RegisterInput = z.infer<typeof registerInputSchema>
+export type PendingSignup = z.infer<typeof pendingSignupSchema>
+export type VerifySignupInput = z.infer<typeof verifySignupInputSchema>
 export type Profile = z.infer<typeof profileSchema>
 export type ProfileInput = z.infer<typeof profileInputSchema>
 export type AvatarInput = z.infer<typeof avatarInputSchema>

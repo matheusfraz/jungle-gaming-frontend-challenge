@@ -36,6 +36,8 @@ pnpm dev:mocks                           # http://localhost:5173 com a API simul
 | `ana@kurio.test` | `Kurio2026` | carteira principal (MetaMask) e secundária (Coinbase), 2 favoritos |
 | `bruno@kurio.test` | `Kurio2026` | sem carteiras (bom para testar o cadastro de carteiras) |
 
+**Criar conta:** na aba "Criar conta", preencha o formulário e confirme o e-mail com o código de 6 dígitos. Como não há envio real, o código chega na **caixa de entrada simulada**: aparece num aviso na tela e no painel "Mocks".
+
 Cupons: `KURIO10` (10%), `GENESIS25` (25%), `VERAO2025` (expirado). Códigos de indicação válidos começam com `KURIO` (ex.: `KURIO2026`).
 
 ## Comandos
@@ -93,6 +95,7 @@ Selecione um cenário de três formas:
 | Sem conexão | `?mock-scenario=offline` |
 | Respostas fora de ordem | `?mock-scenario=out-of-order` e clique rápido em filtros diferentes |
 | Cadastro com conflito | crie conta com `ana@kurio.test` ou usuário `ana_coleciona` |
+| Código de e-mail errado/expirado | no cadastro, digite outro código (5 tentativas) ou espere 10 min; "Reenviar código" libera após 30 s |
 | Sessão expirada | entre, abra `/perfil`, painel → "Expirar sessão atual", clique em "Salvar" |
 | Favorito com falha | entre, painel → "Falha ao favoritar", clique em "Favoritar" no detalhe |
 | Cupom inválido/expirado | no carrinho use `XYZ` ou `VERAO2025` |
@@ -117,10 +120,10 @@ O Playwright sobe `pnpm dev:mocks` na porta 4173. Cada teste roda em contexto is
 |---|---|
 | `01-catalog` | busca, filtros combinados, reset de paginação, ordenação, histórico, vazio, fora de ordem |
 | `02-detail` | acesso direto, galeria, edição esgotada, limite de quantidade, NFT inexistente, 404 |
-| `03-auth` | cadastro (validação e conflito), login, retorno ao fluxo, expiração (controle e relógio), logout, troca de usuário |
+| `03-auth` | cadastro (validação, conflito, código de e-mail correto/errado/expirado, reenvio, refresh), login, retorno ao fluxo, expiração (controle e relógio), logout, troca de usuário |
 | `04-favorites` | visitante, persistência, falha + rollback + nova tentativa |
 | `05-cart` | quantidades, limites, cupom inválido/expirado/válido, remoção, persistência e merge no login |
-| `06-purchase` | do catálogo ao recibo; recibo como snapshot; explorador simulado; remoção só do que foi comprado |
+| `06-purchase` | do catálogo ao recibo; recibo como snapshot; explorador simulado; carteira recém-cadastrada; remoção só do que foi comprado |
 | `07-payment-failures` | pagamento recusado, clique repetido, timeout + mesma chave, carteira recusada/desconexão |
 | `08-account` | perfil (validação e conflito), avatar, senha, carteiras principal/secundária com erros da API |
 | `09-realtime-checkout` | preço/estoque via Socket.IO no carrinho e na revisão; `QUOTE_STALE` e esgotamento no servidor |

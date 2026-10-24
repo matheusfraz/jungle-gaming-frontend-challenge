@@ -67,6 +67,15 @@ export class Mocks {
   listOrders() {
     return this.call<{ id: string; status: string; userId: string }[]>('listOrders')
   }
+  inbox(email: string) {
+    return this.call<{ to: string; subject: string; code: string }[]>('inbox', email)
+  }
+  async latestCode(email: string) {
+    const messages = await this.inbox(email)
+    const code = messages.at(-1)?.code
+    if (!code) throw new Error(`No e-mail sent to ${email}`)
+    return code
+  }
   connectedClients() {
     return this.call<{ userId: string | null }[]>('connectedClients')
   }
