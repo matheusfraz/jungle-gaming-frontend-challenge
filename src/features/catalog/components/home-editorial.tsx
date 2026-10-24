@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
+import { artSrcSet } from '@/lib/images'
 
 const promos = [
   {
@@ -33,7 +34,7 @@ export function HomePromos() {
       {promos.map((promo) => (
         <article key={promo.title} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center bg-card">
           <img
-            src={promo.image}
+            src={promo.image} srcSet={artSrcSet(promo.image)}
             alt={promo.alt}
             width={480}
             height={480}
@@ -70,7 +71,7 @@ export function HomeJournal() {
           <li key={post.title}>
             <article className="relative flex h-full flex-col bg-card">
               <img
-                src={post.image}
+                src={post.image} srcSet={artSrcSet(post.image)}
                 alt=""
                 width={480}
                 height={480}

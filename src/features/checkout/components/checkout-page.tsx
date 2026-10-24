@@ -39,6 +39,7 @@ import { EnsInput, NetworkSelect, WalletTypeSelect } from '@/features/account/co
 import { shortAddress } from '@/lib/format'
 import { createOrder } from '@/features/orders/hooks'
 import { attemptFor, clearAttempt, markAttemptDone, readAttempt, type CheckoutAttempt } from '../attempt'
+import { artSrcSet } from '@/lib/images'
 
 const RECOVERY_WINDOW_MS = 15 * 60_000
 const AUTO_RETRIES = 2
@@ -73,7 +74,7 @@ function walletList(data: WalletsResponse | undefined): Wallet[] {
 function LineItem({ line }: { line: Pick<QuoteLine, 'name' | 'tokenId' | 'image' | 'imageAlt' | 'quantity' | 'editionId'> & { total: string } }) {
   return (
     <li className="grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-3 bg-card pr-3">
-      <img src={line.image} alt={line.imageAlt} width={64} height={64} loading="lazy" className="aspect-square w-16 object-cover" />
+      <img src={line.image} srcSet={artSrcSet(line.image)} alt={line.imageAlt} width={64} height={64} loading="lazy" className="aspect-square w-16 object-cover" />
       <div className="min-w-0 py-2">
         <p className="truncate text-sm font-bold">{line.name}</p>
         <p className="text-xs text-muted-foreground">ID do token: {line.tokenId}</p>

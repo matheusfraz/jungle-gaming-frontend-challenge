@@ -7,6 +7,7 @@ import { QuantityStepper } from '@/components/common/quantity-stepper'
 import { MobileTopBar } from '@/components/layout/mobile-chrome'
 import { EditionPicker } from './edition-picker'
 import { MoreFromCollection } from './more-from-collection'
+import { artSrcSet } from '@/lib/images'
 
 /** Swipeable gallery with page dots (thumbnails do not fit the mobile frame). */
 function MobileGallery({ nft }: { nft: NftDetail }) {
@@ -38,7 +39,7 @@ function MobileGallery({ nft }: { nft: NftDetail }) {
         {nft.gallery.map((image, index) => (
           <img
             key={image.src}
-            src={image.src}
+            src={image.src} srcSet={artSrcSet(image.src)}
             alt={image.alt}
             width={480}
             height={480}

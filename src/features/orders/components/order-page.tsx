@@ -13,6 +13,7 @@ import { useDocumentTitle } from '@/components/common/use-document-title'
 import { cartNotices } from '@/features/cart/notices'
 import { clearAttempt } from '@/features/checkout/attempt'
 import { useOrder, useRealtimeStatus } from '../hooks'
+import { artSrcSet } from '@/lib/images'
 
 const dateFormat = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 
@@ -67,7 +68,7 @@ function Receipt({ order, onClose }: { order: Order; onClose: () => void }) {
                 <tr key={`${line.nftId}-${line.editionId}`}>
                   <td className="py-2">
                     <div className="flex items-center gap-3">
-                      <img src={line.image} alt="" width={64} height={64} className="size-14 rounded-sm object-cover sm:size-16" />
+                      <img src={line.image} srcSet={artSrcSet(line.image)} alt="" width={64} height={64} className="size-14 rounded-sm object-cover sm:size-16" />
                       <div>
                         <p className="font-bold">{line.name}</p>
                         <p className="text-xs text-muted-foreground">ID do token: {line.tokenId}</p>

@@ -28,6 +28,7 @@ import {
 } from '../hooks'
 import { CartNotices } from './cart-notices'
 import { SummaryRows } from './order-summary'
+import { artSrcSet } from '@/lib/images'
 
 function CartRow({ line }: { line: CartLine }) {
   const update = useUpdateCartQuantity()
@@ -61,7 +62,7 @@ function CartRow({ line }: { line: CartLine }) {
       data-testid="cart-row"
     >
       <img
-        src={line.image}
+        src={line.image} srcSet={artSrcSet(line.image)}
         alt={line.imageAlt}
         width={80}
         height={80}
@@ -158,7 +159,7 @@ function MobileCartRow({ line }: { line: CartLine }) {
   return (
     <li className="overflow-hidden rounded-2xl bg-card" data-testid="cart-row">
       <div className="relative grid grid-cols-[96px_minmax(0,1fr)] items-stretch">
-        <img src={line.image} alt={line.imageAlt} width={96} height={96} loading="lazy" className="h-full min-h-24 w-full object-cover" />
+        <img src={line.image} srcSet={artSrcSet(line.image)} alt={line.imageAlt} width={96} height={96} loading="lazy" className="h-full min-h-24 w-full object-cover" />
         <div className="flex min-w-0 flex-col justify-center gap-0.5 py-3 pr-3 pl-3">
           <p className="truncate pr-8 text-sm font-bold">
             <Link to="/nft/$nftId" params={{ nftId: line.nftId }}>

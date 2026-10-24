@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { nftListQueryOptions } from '../api'
 import { PriceTag } from './nft-card'
+import { artSrcSet } from '@/lib/images'
 
 /** "NFT EM DESTAQUE · OFERTA LIMITADA" card under the filters. */
 export function FeaturedNft() {
@@ -27,7 +28,7 @@ export function FeaturedNft() {
           className="group relative block overflow-hidden rounded-2xl focus-visible:outline-2"
         >
           <img
-            src={nft.image}
+            src={nft.image} srcSet={artSrcSet(nft.image)}
             alt={nft.imageAlt}
             width={480}
             height={480}

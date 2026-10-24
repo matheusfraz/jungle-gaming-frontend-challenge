@@ -24,6 +24,7 @@ import { MoreFromCollection, NftCarousel } from './more-from-collection'
 import { EditionPicker } from './edition-picker'
 import { MobileNftDetail } from './mobile-nft-detail'
 import { useIsDesktop } from '@/hooks/use-is-desktop'
+import { artSrcSet } from '@/lib/images'
 
 const EDITION_PREFERENCE: EditionId[] = ['1-50', '1-10', 'open', '1-1']
 
@@ -67,7 +68,7 @@ function Gallery({ nft }: { nft: NftDetail }) {
               )}
             >
               <img
-                src={item.src}
+                src={item.src} srcSet={artSrcSet(item.src)}
                 alt=""
                 width={100}
                 height={100}
@@ -81,7 +82,7 @@ function Gallery({ nft }: { nft: NftDetail }) {
       </ul>
       <div className="relative order-1 bg-card p-3 sm:order-2 lg:p-5">
         <img
-          src={image.src}
+          src={image.src} srcSet={artSrcSet(image.src)}
           alt={image.alt}
           width={480}
           height={480}
@@ -102,7 +103,7 @@ function Gallery({ nft }: { nft: NftDetail }) {
         <DialogContent className="max-w-[min(94vw,720px)] p-4 sm:max-w-[720px]">
           <DialogTitle>{nft.name}</DialogTitle>
           <DialogDescription className="sr-only">{image.alt}</DialogDescription>
-          <img src={image.src} alt={image.alt} width={480} height={480} className="aspect-square w-full rounded-xl object-cover" />
+          <img src={image.src} srcSet={artSrcSet(image.src)} alt={image.alt} width={480} height={480} className="aspect-square w-full rounded-xl object-cover" />
         </DialogContent>
       </Dialog>
     </div>

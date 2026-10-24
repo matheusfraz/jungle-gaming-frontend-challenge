@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
+import { artSrcSet } from '@/lib/images'
 
 /**
  * Editorial highlights for the hero. Images are static assets (preloaded in
@@ -77,7 +78,7 @@ export function HomeHero() {
       >
         <img
           key={slide.image}
-          src={slide.image}
+          src={slide.image} srcSet={artSrcSet(slide.image)}
           alt={slide.alt}
           width={480}
           height={480}

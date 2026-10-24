@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { ArrowRight, Search, SlidersHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { artSrcSet } from '@/lib/images'
 
 /** "Explorar coleções" search + orange filter button (mobile Início frame). */
 export function MobileSearchRow({
@@ -111,7 +112,7 @@ export function MobileHero() {
           <Link to="/nft/$nftId" params={{ nftId: slide.nftId }} className="relative block" aria-label={`Ver detalhes: ${slide.name}`}>
             <img
               key={slide.image}
-              src={slide.image}
+              src={slide.image} srcSet={artSrcSet(slide.image)}
               alt={slide.name}
               width={480}
               height={480}
@@ -120,7 +121,7 @@ export function MobileHero() {
               className="aspect-[13/12] w-full rounded-xl object-cover"
             />
             <img
-              src={companion.image}
+              src={companion.image} srcSet={artSrcSet(companion.image)}
               alt=""
               width={160}
               height={160}

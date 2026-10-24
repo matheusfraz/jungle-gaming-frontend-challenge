@@ -11,6 +11,7 @@ import { announce } from '@/components/feedback/announce'
 import { useSession } from '@/features/auth/session'
 import { useAddToCart } from '@/features/cart/hooks'
 import { useFavorites, useToggleFavorite } from '@/features/favorites/hooks'
+import { artSrcSet } from '@/lib/images'
 
 export function PriceTag({ price, compareAt, className }: { price: string; compareAt?: string | null; className?: string }) {
   return (
@@ -77,7 +78,7 @@ export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?:
           </span>
         ) : null}
         <img
-          src={nft.image}
+          src={nft.image} srcSet={artSrcSet(nft.image)}
           alt={nft.imageAlt}
           width={480}
           height={480}
@@ -143,7 +144,7 @@ export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?:
         <DialogContent className="max-w-[min(92vw,640px)] p-4 sm:max-w-[640px]">
           <DialogTitle>{nft.name}</DialogTitle>
           <DialogDescription className="sr-only">{nft.imageAlt}</DialogDescription>
-          <img src={nft.image} alt={nft.imageAlt} width={480} height={480} className="aspect-square w-full rounded-xl object-cover" />
+          <img src={nft.image} srcSet={artSrcSet(nft.image)} alt={nft.imageAlt} width={480} height={480} className="aspect-square w-full rounded-xl object-cover" />
         </DialogContent>
       </Dialog>
     </article>
