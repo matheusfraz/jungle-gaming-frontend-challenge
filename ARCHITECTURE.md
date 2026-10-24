@@ -44,8 +44,6 @@ Formato único (`apiErrorSchema`): `{ code, message, fieldErrors?, details? }`.
 | 409 | `IDEMPOTENCY_CONFLICT` | mesma `Idempotency-Key` com corpo diferente |
 | 409 | `WALLET_NOT_CONNECTED` | pedido sem carteira conectada |
 | 422 | `COUPON_INVALID` · `COUPON_EXPIRED` | cupom |
-| 422 | `CODE_INVALID` · `CODE_EXPIRED` | código de confirmação de e-mail errado, expirado ou com tentativas esgotadas |
-| 429 | `RATE_LIMITED` | reenvio de código antes do intervalo mínimo (`details.retryAfterSeconds`) |
 | 5xx | `TRANSIENT` · `INTERNAL` | falha transitória |
 
 No cliente, falhas de rede viram `NETWORK_ERROR`, timeouts `TIMEOUT` e cancelamentos `CANCELED` (`ApiRequestError.isTransient` decide o que pode ser repetido).
@@ -54,9 +52,7 @@ No cliente, falhas de rede viram `NETWORK_ERROR`, timeouts `TIMEOUT` e cancelame
 
 | Recurso | Método e rota | Corpo / parâmetros | Resposta |
 |---|---|---|---|
-| Sessão | `POST /auth/register` | `{ username, email, password, confirmPassword }` | `202 { verificationId, email, expiresAt, resendAvailableAt }` — envia o código; a conta ainda não existe |
-| | `POST /auth/register/verify` | `{ verificationId, code }` | `201 { token, session }` — cria a conta e abre a sessão |
-| | `POST /auth/register/resend` | `{ verificationId }` | novo código (intervalo mínimo de 30 s) |
+| Sessão | `POST /auth/register` | `{ username, email, password, confirmPassword }` | `201 { token, session }` — cria a conta e abre a sessão; `409 CONFLICT` se e-mail ou usuário já existem |
 | | `POST /auth/login` | `{ email, password }` | `{ token, session }` |
 | | `GET /auth/session` | Bearer | `{ user, expiresAt }` |
 | | `POST /auth/logout` | Bearer | `204` |
@@ -111,7 +107,7 @@ Aplicação no cache (`use-realtime-sync.ts`): `nft.updated` atualiza detalhe e 
 
 ## 4. Sessão e autenticação
 
-- **Cadastro com confirmação de e-mail:** o formulário valida os campos e conflitos; a API então envia um código de 6 dígitos para o e-mail e só cria a conta quando o código é confirmado. O código vale 10 minutos, aceita 5 tentativas e pode ser reenviado a cada 30 s; no servidor fica guardado só o hash. A etapa pendente fica em `sessionStorage` (sobrevive a refresh). Como não há envio real de e-mails, o mock entrega a mensagem numa **caixa de entrada simulada** (painel Mocks, com aviso na tela) e `window.__kurioMocks.inbox(email)` a expõe aos testes.
+- **Cadastro:** o formulário valida os campos com o mesmo contrato zod do servidor. O e-mail só precisa ter formato válido (`nome@dominio.tld`) e não pode estar em uso. A conta é criada e a sessão começa na mesma requisição. Não há confirmação por código: sem envio real de e-mails, essa etapa só dificultaria testar o app. Em produção, a confirmação seria feita pelo backend, sem mudar o restante do fluxo.
 - Login e a confirmação do cadastro devolvem um **token bearer** guardado em `localStorage` (`kurio:token`), o único segredo no navegador. Senhas nunca são guardadas em claro: no mock ficam como `SHA-256(salt:senha)` com salt por usuário.
 - `GET /auth/session` (query `['session']`) recupera a sessão após refresh; 401 limpa o token.
 - **Rotas privadas** (`/pagamento`, `/pedido/:id`, `/perfil/*`): `beforeLoad` em `_authenticated` redireciona para `/entrar?redirect=<href>`. Login retorna ao `redirect` (só caminhos relativos são aceitos).

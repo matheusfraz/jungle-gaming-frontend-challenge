@@ -1,7 +1,5 @@
 import {
   authResponseSchema,
-  pendingSignupSchema,
-  type VerifySignupInput,
   sessionSchema,
   type LoginInput,
   type RegisterInput,
@@ -15,18 +13,9 @@ export function login(input: LoginInput) {
   return request(authResponseSchema, { method: 'POST', url: '/auth/login', data: input })
 }
 
-/** Step 1: sends a confirmation code to the e-mail (the account does not exist yet). */
+/** Creates the account and opens the session right away. */
 export function register(input: RegisterInput) {
-  return request(pendingSignupSchema, { method: 'POST', url: '/auth/register', data: input })
-}
-
-/** Step 2: confirms the code, creates the account and opens the session. */
-export function verifySignup(input: VerifySignupInput) {
-  return request(authResponseSchema, { method: 'POST', url: '/auth/register/verify', data: input })
-}
-
-export function resendSignupCode(verificationId: string) {
-  return request(pendingSignupSchema, { method: 'POST', url: '/auth/register/resend', data: { verificationId } })
+  return request(authResponseSchema, { method: 'POST', url: '/auth/register', data: input })
 }
 
 export async function logout(): Promise<void> {

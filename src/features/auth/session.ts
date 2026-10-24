@@ -1,10 +1,10 @@
 import { queryOptions, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
-import type { AuthResponse, LoginInput, RegisterInput, VerifySignupInput } from '@/contracts/account'
+import type { AuthResponse, LoginInput, RegisterInput } from '@/contracts/account'
 import { queryKeys } from '@/lib/query/keys'
 import { getGuestCartId, getToken, rotateGuestCartId, setToken } from '@/lib/session/token'
 import { realtime } from '@/realtime/client'
-import { fetchSession, login, logout, mergeGuestCart, register, resendSignupCode, verifySignup } from './api'
+import { fetchSession, login, logout, mergeGuestCart, register } from './api'
 
 export const sessionQueryOptions = queryOptions({
   queryKey: queryKeys.session,
@@ -55,22 +55,13 @@ export function useLogin() {
   })
 }
 
-/** Sign-up step 1: the API e-mails a confirmation code. No session yet. */
+/** Sign-up creates the account and starts the session in one step. */
 export function useRegister() {
-  return useMutation({ mutationFn: (input: RegisterInput) => register(input) })
-}
-
-/** Sign-up step 2: a valid code creates the account and starts the session. */
-export function useVerifySignup() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: VerifySignupInput) => verifySignup(input),
+    mutationFn: (input: RegisterInput) => register(input),
     onSuccess: (response) => startSession(queryClient, response),
   })
-}
-
-export function useResendSignupCode() {
-  return useMutation({ mutationFn: (verificationId: string) => resendSignupCode(verificationId) })
 }
 
 export async function endSession(queryClient: QueryClient) {

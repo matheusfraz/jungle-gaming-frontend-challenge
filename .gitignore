@@ -29,6 +29,5 @@ test-results
 *.sln
 *.sw?
 
-# Local scratch and tooling
-.tmp
-.claude
+# TanStack Router plugin temp files
+.tanstack

@@ -1,13 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { FlaskConical, Mail } from 'lucide-react'
-import { toast } from 'sonner'
+import { FlaskConical } from 'lucide-react'
 import type { Cart } from '@/contracts/commerce'
 import { addMoney } from '@/lib/money'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { mockControl } from './control'
-import { onOutboxMessage, type OutboxMessage } from './db'
 import { scenarioIds, scenarios, type ScenarioId } from './scenarios'
 
 /**
@@ -18,21 +16,6 @@ export default function MockPanel() {
   const queryClient = useQueryClient()
   const [scenario, setScenario] = useState<ScenarioId>(mockControl.getScenario())
   const [log, setLog] = useState<string>('')
-  const [inbox, setInbox] = useState<OutboxMessage[]>(() => mockControl.inbox())
-
-  // Simulated e-mail delivery: show each message as a toast and in the inbox.
-  useEffect(
-    () =>
-      onOutboxMessage((message) => {
-        setInbox(mockControl.inbox())
-        toast(`E-mail simulado para ${message.to}`, {
-          description: `${message.subject}: ${message.code}`,
-          icon: <Mail className="size-4 text-primary" />,
-          duration: 15_000,
-        })
-      }),
-    [],
-  )
 
   const cartNft = () => {
     const carts = queryClient.getQueriesData<Cart>({ queryKey: ['cart'] })
@@ -152,29 +135,11 @@ export default function MockPanel() {
           </Button>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <h3 className="flex items-center gap-2 text-sm font-bold">
-            <Mail className="size-4 text-primary" aria-hidden /> Caixa de entrada simulada
-          </h3>
-          {inbox.length === 0 ? (
-            <p className="text-xs text-subtle">Nenhum e-mail enviado ainda. Crie uma conta para receber o código.</p>
-          ) : (
-            <ul className="flex flex-col gap-2" data-testid="mock-inbox">
-              {[...inbox].reverse().slice(0, 5).map((message) => (
-                <li key={message.id} className="rounded-sm border border-border p-2 text-xs">
-                  <p className="text-subtle">Para: {message.to}</p>
-                  <p>{message.subject}</p>
-                  <p className="font-mono text-base font-bold tracking-[0.3em] text-primary">{message.code}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
         <div className="rounded-sm bg-background p-3 text-xs">
           <p className="font-bold">Credenciais fictícias</p>
           <p>ana@kurio.test · Kurio2026</p>
           <p>bruno@kurio.test · Kurio2026</p>
+          <p className="mt-1 text-subtle">Ou crie uma conta com qualquer e-mail válido.</p>
           <p className="mt-2 font-bold">Cupons</p>
           <p>KURIO10, GENESIS25 (válidos) · VERAO2025 (expirado)</p>
         </div>

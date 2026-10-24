@@ -145,7 +145,7 @@ export function AuthDialog({ mode, redirect, reason }: { mode: Mode; redirect?: 
         <DialogDescription className="text-center text-xs text-foreground">
           {mode === 'login'
             ? 'Entre para gerenciar sua carteira, coleção e perfil de criador.'
-            : 'Crie seu perfil de colecionador. Vamos confirmar seu e-mail com um código.'}
+            : 'Crie seu perfil de colecionador. Leva menos de um minuto.'}
         </DialogDescription>
         {reason === 'expired' ? (
           <InlineAlert tone="warning">Sua sessão expirou. Entre novamente para continuar de onde parou.</InlineAlert>

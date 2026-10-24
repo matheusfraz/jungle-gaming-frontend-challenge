@@ -37,7 +37,7 @@ pnpm dev:mocks                           # http://localhost:5173 com a API simul
 | `ana@kurio.test` | `Kurio2026` | carteira principal (MetaMask) e secundária (Coinbase), 2 favoritos |
 | `bruno@kurio.test` | `Kurio2026` | sem carteiras (bom para testar o cadastro de carteiras) |
 
-**Criar conta:** na aba "Criar conta", preencha o formulário e confirme o e-mail com o código de 6 dígitos. Como não há envio real, o código chega na **caixa de entrada simulada**: aparece num aviso na tela e no painel "Mocks".
+**Criar conta:** na aba "Criar conta", use qualquer e-mail com formato válido (ex.: `voce@gmail.com`), mesmo fictício. A conta é criada na hora e a sessão já começa. Depois é possível sair e entrar de novo com esse e-mail e senha. As contas criadas ficam salvas no navegador (`localStorage`) e somem se os dados do site forem limpos.
 
 Cupons: `KURIO10` (10%), `GENESIS25` (25%), `VERAO2025` (expirado). Códigos de indicação válidos começam com `KURIO` (ex.: `KURIO2026`).
 
@@ -96,7 +96,7 @@ Selecione um cenário de três formas:
 | Sem conexão | `?mock-scenario=offline` |
 | Respostas fora de ordem | `?mock-scenario=out-of-order` e clique rápido em filtros diferentes |
 | Cadastro com conflito | crie conta com `ana@kurio.test` ou usuário `ana_coleciona` |
-| Código de e-mail errado/expirado | no cadastro, digite outro código (5 tentativas) ou espere 10 min; "Reenviar código" libera após 30 s |
+| E-mail inválido ou já cadastrado | no cadastro, use `nome@gmail` (sem domínio completo) ou `ana@kurio.test` |
 | Sessão expirada | entre, abra `/perfil`, painel → "Expirar sessão atual", clique em "Salvar" |
 | Favorito com falha | entre, painel → "Falha ao favoritar", clique em "Favoritar" no detalhe |
 | Cupom inválido/expirado | no carrinho use `XYZ` ou `VERAO2025` |
@@ -139,7 +139,7 @@ E2E_BASE_URL=https://kurio-omega.vercel.app E2E_REPORT=e2e/reports/producao pnpm
 |---|---|
 | `01-catalog` | busca, filtros combinados, reset de paginação, ordenação, histórico, vazio, fora de ordem |
 | `02-detail` | acesso direto, galeria, edição esgotada, limite de quantidade, NFT inexistente, 404 |
-| `03-auth` | cadastro (validação, conflito, código de e-mail correto/errado/expirado, reenvio, refresh), login, retorno ao fluxo, expiração (controle e relógio), logout, troca de usuário |
+| `03-auth` | cadastro (validação, formato de e-mail, conflito, conta nova entrando de novo), login, retorno ao fluxo, expiração (controle e relógio), logout, troca de usuário |
 | `04-favorites` | visitante, persistência, falha + rollback + nova tentativa |
 | `05-cart` | quantidades, limites, cupom inválido/expirado/válido, remoção, persistência e merge no login |
 | `06-purchase` | do catálogo ao recibo; recibo como snapshot; explorador simulado; carteira recém-cadastrada; remoção só do que foi comprado |

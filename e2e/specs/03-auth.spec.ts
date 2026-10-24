@@ -1,82 +1,51 @@
 import { expect, login, loginForm, logout, openApp, registerForm, test, USERS } from '../support/fixtures'
 
 test.describe('3. Cadastro, login, expiração, logout e troca de usuário', () => {
-  test('cadastro valida campos, trata conflito, confirma o e-mail e autentica', async ({ page, mocks }) => {
+  test('cadastro valida campos e formato do e-mail, trata conflito, cria a conta e permite entrar de novo', async ({
+    page,
+  }) => {
     await openApp(page, '/cadastro')
     const dialog = registerForm(page)
+    const submit = dialog.getByRole('button', { name: /^Criar (conta|perfil)$/ })
 
     // Client-side validation
-    await dialog.getByRole('button', { name: /^Criar (conta|perfil)$/ }).click()
+    await submit.click()
     await expect(dialog.getByText('Nome de usuário é obrigatório.')).toBeVisible()
     await expect(dialog.getByPlaceholder('Nome de usuário')).toHaveAttribute('aria-invalid', 'true')
 
-    // Server-side conflict (e-mail already registered)
+    // Only the e-mail format is checked: these are rejected without calling the API.
     await dialog.getByPlaceholder('Nome de usuário').fill('nova_conta')
-    await dialog.getByPlaceholder('Digite seu e-mail').fill(USERS.ana.email)
     await dialog.getByPlaceholder('Senha', { exact: true }).fill('Segura123')
     await dialog.getByPlaceholder('Confirmar senha').fill('Segura123')
-    await dialog.getByRole('button', { name: /^Criar (conta|perfil)$/ }).click()
+    const email = dialog.getByPlaceholder('Digite seu e-mail')
+    for (const invalid of ['nova', 'nova@', 'nova@gmail', 'nova @gmail.com']) {
+      await email.fill(invalid)
+      await submit.click()
+      await expect(dialog.getByText('Informe um e-mail válido.')).toBeVisible()
+      await expect(email).toHaveAttribute('aria-invalid', 'true')
+    }
+
+    // Server-side conflict (e-mail already registered)
+    await email.fill(USERS.ana.email)
+    await submit.click()
     await expect(dialog.getByText('Este e-mail já está cadastrado.')).toBeVisible()
 
-    // Fix the e-mail: the API sends a confirmation code instead of creating the account.
-    await dialog.getByPlaceholder('Digite seu e-mail').fill('nova@kurio.test')
-    await dialog.getByRole('button', { name: /^Criar (conta|perfil)$/ }).click()
-    const verify = page.getByTestId('verify-email')
-    await expect(verify.getByRole('heading', { name: 'Confirme seu e-mail' })).toBeVisible()
-    await expect(verify).toContainText('nova@kurio.test')
-    await expect(verify.getByRole('button', { name: /Reenviar código em \d+ s/ })).toBeDisabled()
-    expect(await page.evaluate(() => localStorage.getItem('kurio:token'))).toBeNull()
-
-    // The pending step survives a refresh.
-    await page.reload()
-    await expect(page.getByTestId('verify-email')).toBeVisible()
-
-    // Wrong code, then the code from the simulated inbox.
-    const code = await mocks.latestCode('nova@kurio.test')
-    const wrong = code === '000000' ? '111111' : '000000'
-    const codeInput = page.getByLabel('Código de confirmação')
-    await codeInput.fill(wrong)
-    await page.getByRole('button', { name: 'Confirmar e criar conta' }).click()
-    await expect(page.getByText(/Código incorreto\. Você tem mais 4 tentativa/).first()).toBeVisible()
-    await expect(codeInput).toHaveAttribute('aria-invalid', 'true')
-
-    await codeInput.fill(code)
-    await page.getByRole('button', { name: 'Confirmar e criar conta' }).click()
+    // Any other well-formed e-mail creates the account and starts the session.
+    await email.fill('Nova.Pessoa@Gmail.com')
+    await submit.click()
     await page.waitForFunction(() => Boolean(localStorage.getItem('kurio:token')))
     await expect(page).not.toHaveURL(/\/cadastro/)
 
     // Session survives refresh
     await page.reload()
     await openApp(page, '/perfil')
-    await expect(page.locator('main').getByLabel('E-mail')).toHaveValue('nova@kurio.test')
-  })
+    await expect(page.locator('main').getByLabel('E-mail')).toHaveValue('nova.pessoa@gmail.com')
 
-  test('código expirado e reenvio (relógio controlado)', async ({ page, mocks }) => {
-    await page.clock.install()
-    await openApp(page, '/cadastro')
-    const dialog = registerForm(page)
-    await dialog.getByPlaceholder('Nome de usuário').fill('relogio_teste')
-    await dialog.getByPlaceholder('Digite seu e-mail').fill('relogio@kurio.test')
-    await dialog.getByPlaceholder('Senha', { exact: true }).fill('Segura123')
-    await dialog.getByPlaceholder('Confirmar senha').fill('Segura123')
-    await dialog.getByRole('button', { name: /^Criar (conta|perfil)$/ }).click()
-    await expect(page.getByTestId('verify-email')).toBeVisible()
-    const firstCode = await mocks.latestCode('relogio@kurio.test')
-
-    // 11 minutes later the code is no longer accepted.
-    await page.clock.fastForward(11 * 60_000)
-    await page.getByLabel('Código de confirmação').fill(firstCode)
-    await page.getByRole('button', { name: 'Confirmar e criar conta' }).click()
-    await expect(page.getByText('O código expirou. Peça um novo código.').first()).toBeVisible()
-
-    // Resend is available again; the new code works.
-    await page.getByRole('button', { name: 'Reenviar código', exact: true }).click()
-    await expect(page.getByText('Novo código enviado.')).toBeVisible()
-    await expect.poll(() => mocks.inbox('relogio@kurio.test').then((messages) => messages.length)).toBe(2)
-    await page.getByLabel('Código de confirmação').fill(await mocks.latestCode('relogio@kurio.test'))
-    await page.getByRole('button', { name: 'Confirmar e criar conta' }).click()
-    await page.waitForFunction(() => Boolean(localStorage.getItem('kurio:token')))
-    await expect(page).not.toHaveURL(/\/cadastro/)
+    // The new account can log in again after logging out.
+    await logout(page)
+    await login(page, { email: 'nova.pessoa@gmail.com', password: 'Segura123' })
+    await openApp(page, '/perfil')
+    await expect(page.locator('main').getByLabel('Nome de usuário')).toHaveValue('nova_conta')
   })
 
   test('login inválido mostra erro e login válido retorna ao fluxo anterior', async ({ page }) => {
