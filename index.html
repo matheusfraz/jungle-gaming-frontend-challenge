@@ -20,7 +20,7 @@
     -->
     <div id="root">
       <div class="flex min-h-screen flex-col" aria-busy="true">
-        <header class="container-page">
+        <header class="container-page hidden md:block">
           <div class="flex h-[72px] items-center justify-between gap-4 border-b border-border">
             <span class="text-sm font-extrabold tracking-[0.25em]">KURIO</span>
           </div>
@@ -29,7 +29,8 @@
       </div>
     </div>
     <template id="shell-home">
-      <section class="container-page grid items-center gap-8 pt-6 pb-4 md:grid-cols-[minmax(0,1fr)_minmax(0,455px)] md:gap-10 md:pt-4">
+      <!-- Desktop hero (same markup as HomeHero) -->
+      <section class="container-page hidden items-center gap-8 pt-6 pb-4 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,455px)] md:gap-10 md:pt-4">
         <div class="flex flex-col gap-5 md:pl-12">
           <p class="text-sm font-semibold tracking-widest">Bem-vindo à Kurio</p>
           <h1 class="text-[28px] leading-[1.6] font-bold tracking-[0.12em] uppercase sm:text-4xl sm:leading-[1.75] lg:text-[40px]">
@@ -52,11 +53,43 @@
           />
         </div>
       </section>
+      <!-- Mobile search row + hero card (same markup as MobileSearchRow / MobileHero) -->
+      <div class="md:hidden">
+        <div class="flex gap-3 px-4 pt-4">
+          <div class="h-12 min-w-0 flex-1 rounded-xl bg-card"></div>
+          <div class="size-12 shrink-0 rounded-xl bg-primary"></div>
+        </div>
+        <section class="px-4 pt-4">
+          <div class="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#7a5534_0%,#563820_45%,#2e1c11_100%)] p-4 pb-3">
+            <div class="relative grid grid-cols-[minmax(0,1fr)_42%] items-center gap-3">
+              <div class="flex flex-col gap-1.5">
+                <p class="text-[10px] tracking-wide text-foreground/90">Bem-vindo à Kurio</p>
+                <h1 class="text-[15px] leading-7 font-bold tracking-[0.08em] uppercase">Seja dono da cultura digital</h1>
+                <p class="text-[10px] leading-4 text-foreground/70">Descubra NFTs selecionados de criadores do mundo todo.</p>
+                <span class="mt-1 h-5"></span>
+              </div>
+              <div class="relative block">
+                <img
+                  src="/nfts/ape-emerald.webp"
+                  alt="Emerald Ape #042"
+                  width="480"
+                  height="480"
+                  fetchpriority="high"
+                  class="aspect-[13/12] w-full rounded-xl object-cover"
+                />
+              </div>
+            </div>
+            <div class="mt-2 h-6"></div>
+          </div>
+        </section>
+      </div>
     </template>
     <script>
       ;(function () {
         var path = location.pathname
-        if (path === '/' || path === '/entrar' || path === '/cadastro') {
+        var desktop = window.matchMedia('(min-width: 768px)').matches
+        // On mobile, login/sign-up are full-screen pages (no home behind them).
+        if (path === '/' || (desktop && (path === '/entrar' || path === '/cadastro'))) {
           var template = document.getElementById('shell-home')
           document.getElementById('shell-main').appendChild(template.content.cloneNode(true))
         }

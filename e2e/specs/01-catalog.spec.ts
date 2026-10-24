@@ -55,9 +55,11 @@ test.describe('1. Catálogo: busca, filtros, ordenação, paginação e históri
 
   test('ordenação por menor preço e refresh mantêm o resultado', async ({ page }) => {
     await openApp(page, '/mercado')
+    if (isMobile(page)) await filters(page)
     await page.getByLabel('Ordenar por').click()
     await page.getByRole('option', { name: 'Menor preço' }).click()
     await expect(page).toHaveURL(/sort=price-asc/)
+    await closeFilters(page)
     await expect(cards(page).first()).toContainText('Copper Wave')
     await expect(cards(page).first()).toContainText('0.02 ETH')
     await page.reload()

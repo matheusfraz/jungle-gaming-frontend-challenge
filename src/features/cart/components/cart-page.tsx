@@ -9,6 +9,9 @@ import { formatEth, multiplyMoney } from '@/lib/money'
 import { errorMessage, isApiError } from '@/lib/http/client'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Breadcrumbs } from '@/components/common/breadcrumbs'
+import { MobileTopBar } from '@/components/layout/mobile-chrome'
+import { useIsDesktop } from '@/hooks/use-is-desktop'
+import { cn } from '@/lib/utils'
 import { QuantityStepper } from '@/components/common/quantity-stepper'
 import { EmptyState, ErrorState, InlineAlert } from '@/components/common/states'
 import { useDocumentTitle } from '@/components/common/use-document-title'
@@ -126,7 +129,96 @@ function CartRow({ line }: { line: CartLine }) {
   )
 }
 
-function CouponForm({ appliedCode }: { appliedCode: string | null }) {
+/** Row from the mobile cart frame. */
+function MobileCartRow({ line }: { line: CartLine }) {
+  const update = useUpdateCartQuantity()
+  const remove = useRemoveCartLine()
+  const overLimit = line.quantity > line.maxQuantity
+
+  const changeQuantity = (quantity: number) =>
+    update.mutate(
+      { lineId: line.id, quantity },
+      {
+        onSuccess: () => announce(`Quantidade de ${line.name} alterada para ${quantity}.`),
+        onError: (error) => {
+          toast.error(errorMessage(error))
+          announce(errorMessage(error), 'assertive')
+        },
+      },
+    )
+  const onRemove = () =>
+    remove.mutate(line.id, {
+      onSuccess: () => {
+        toast.success(`${line.name} removido do carrinho.`)
+        announce(`${line.name} removido do carrinho.`)
+      },
+      onError: (error) => toast.error(errorMessage(error)),
+    })
+
+  return (
+    <li className="overflow-hidden rounded-2xl bg-card" data-testid="cart-row">
+      <div className="relative grid grid-cols-[96px_minmax(0,1fr)] items-stretch">
+        <img src={line.image} alt={line.imageAlt} width={96} height={96} loading="lazy" className="h-full min-h-24 w-full object-cover" />
+        <div className="flex min-w-0 flex-col justify-center gap-0.5 py-3 pr-3 pl-3">
+          <p className="truncate pr-8 text-sm font-bold">
+            <Link to="/nft/$nftId" params={{ nftId: line.nftId }}>
+              {line.name}
+            </Link>
+          </p>
+          <p className="text-xs text-subtle">Edição: {editionLabels[line.editionId]}</p>
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <p className="text-base font-bold text-primary tabular-nums">
+              <span className="sr-only">Total do item: </span>
+              {formatEth(multiplyMoney(line.unitPriceEth, line.quantity))}
+            </p>
+            <QuantityStepper
+              label={`Quantidade de ${line.name}`}
+              value={line.quantity}
+              max={Math.max(line.quantity > line.maxQuantity ? line.quantity : line.maxQuantity, 1)}
+              onChange={changeQuantity}
+              size="sm"
+              tone="muted"
+            />
+          </div>
+          <span className="sr-only">Preço unitário: {formatEth(line.unitPriceEth)}</span>
+        </div>
+        <button
+          type="button"
+          onClick={onRemove}
+          disabled={remove.isPending}
+          className="absolute top-2 right-2 inline-flex size-8 items-center justify-center rounded-full text-primary hover:bg-secondary"
+          aria-label={`Remover ${line.name} do carrinho`}
+        >
+          <Trash2 className="size-4" aria-hidden />
+        </button>
+      </div>
+      {overLimit ? (
+        <div className="px-3 pb-3">
+          <InlineAlert
+            tone="error"
+            action={
+              line.maxQuantity > 0 ? (
+                <Button size="sm" variant="outline" onClick={() => changeQuantity(line.maxQuantity)}>
+                  Ajustar para {line.maxQuantity}
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={onRemove}>
+                  Remover
+                </Button>
+              )
+            }
+          >
+            {line.maxQuantity === 0
+              ? 'Esta edição esgotou e não pode ser comprada.'
+              : `Só restam ${line.maxQuantity} unidade(s) disponíveis para esta edição.`}
+          </InlineAlert>
+        </div>
+      ) : null}
+    </li>
+  )
+}
+
+function CouponForm({ appliedCode, variant = 'desktop' }: { appliedCode: string | null; variant?: 'desktop' | 'mobile' }) {
   const [code, setCode] = useState('')
   const [error, setError] = useState<string>()
   const apply = useApplyCoupon()
@@ -179,10 +271,10 @@ function CouponForm({ appliedCode }: { appliedCode: string | null }) {
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-2">
-      <label htmlFor="coupon-code" className="text-sm font-bold">
+      <label htmlFor="coupon-code" className={cn('text-sm font-bold', variant === 'mobile' && 'sr-only')}>
         Código promocional
       </label>
-      <div className="flex">
+      <div className={cn('flex', variant === 'mobile' && 'relative')}>
         <input
           id="coupon-code"
           value={code}
@@ -191,12 +283,22 @@ function CouponForm({ appliedCode }: { appliedCode: string | null }) {
           autoComplete="off"
           aria-invalid={Boolean(error)}
           aria-describedby={error ? 'coupon-error' : 'coupon-hint'}
-          className="h-11 min-w-0 flex-1 rounded-l-sm border border-primary bg-background px-3 text-xs uppercase placeholder:normal-case placeholder:text-subtle"
+          className={cn(
+            'min-w-0 flex-1 bg-background px-3 text-xs uppercase placeholder:normal-case placeholder:text-subtle',
+            variant === 'mobile'
+              ? 'h-12 rounded-full border border-border pr-28 pl-5'
+              : 'h-11 rounded-l-sm border border-primary',
+          )}
         />
         <button
           type="submit"
           disabled={apply.isPending}
-          className="h-11 rounded-r-sm bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          className={cn(
+            'text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-60',
+            variant === 'mobile'
+              ? 'absolute inset-y-0 right-0 rounded-full bg-[linear-gradient(90deg,#d28a4c,#a8683a)] px-6'
+              : 'h-11 rounded-r-sm bg-primary px-5',
+          )}
         >
           {apply.isPending ? 'Aplicando…' : 'Aplicar'}
         </button>
@@ -233,15 +335,106 @@ function CartSkeleton() {
 export function CartPage() {
   useDocumentTitle('Carrinho')
   const navigate = useNavigate()
+  const isDesktop = useIsDesktop()
   const cart = useCart()
   const quote = useCartQuote(cart.data)
-  const suggestions = useQuery(nftListQueryOptions({ tab: 'trending', pageSize: 10, sort: 'recent' }))
+  const suggestions = useQuery({
+    ...nftListQueryOptions({ tab: 'trending', pageSize: 10, sort: 'recent' }),
+    enabled: isDesktop,
+  })
   const items = cart.data?.items ?? []
   const blockingIssues = (quote.data?.issues ?? []).filter(
     (issue) => issue.type === 'UNAVAILABLE' || issue.type === 'INSUFFICIENT_QUANTITY',
   )
   const couponIssue = quote.data?.issues.find((issue) => issue.type === 'COUPON_EXPIRED' || issue.type === 'COUPON_INVALID')
   const canCheckout = items.length > 0 && quote.isSuccess && !quote.isFetching && blockingIssues.length === 0
+
+  const summary = (
+    <>
+      {couponIssue ? <InlineAlert tone="error">{couponIssue.message}</InlineAlert> : null}
+      {quote.isError ? (
+        <ErrorState
+          error={quote.error}
+          title="Não foi possível calcular o total."
+          onRetry={() => void quote.refetch()}
+          retrying={quote.isFetching}
+          className="py-6"
+        />
+      ) : (
+        <SummaryRows
+          quote={quote.data}
+          loading={cart.isPending || (quote.isPending && items.length > 0)}
+          updating={quote.isFetching}
+        />
+      )}
+      {blockingIssues.length ? (
+        <InlineAlert tone="error">
+          {blockingIssues.map((issue) => issue.message).join(' ')} Ajuste o carrinho para continuar.
+        </InlineAlert>
+      ) : null}
+    </>
+  )
+
+  const empty = (
+    <EmptyState
+      icon={<ShoppingCart className="size-8" />}
+      title="Seu carrinho está vazio"
+      description="Explore o mercado e adicione NFTs para vê-los aqui."
+      action={
+        <Link to="/mercado" className={buttonVariants()}>
+          Explorar o mercado
+        </Link>
+      }
+    />
+  )
+  const loadError = (
+    <ErrorState error={cart.error} title="Não foi possível carregar o carrinho." onRetry={() => void cart.refetch()} retrying={cart.isFetching} />
+  )
+
+  if (!isDesktop) {
+    return (
+      <div className="flex min-h-[calc(100svh-0px)] flex-col">
+        <MobileTopBar title="Carrinho de NFTs" fallback="/mercado" />
+        <div className="flex flex-1 flex-col gap-3 px-4 pt-3">
+          {cart.isError && !cart.data ? (
+            loadError
+          ) : !cart.isPending && items.length === 0 ? (
+            empty
+          ) : (
+            <>
+              <CartNotices />
+              {cart.isPending ? (
+                <CartSkeleton />
+              ) : (
+                <ul className="flex flex-col gap-4" aria-label="Itens no carrinho">
+                  {items.map((line) => (
+                    <MobileCartRow key={line.id} line={line} />
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
+        {items.length > 0 || cart.isPending ? (
+          <section
+            aria-label="Resumo da carteira"
+            className="mt-5 flex flex-col gap-4 rounded-t-3xl bg-card px-5 pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+          >
+            <CouponForm appliedCode={cart.data?.couponCode ?? null} variant="mobile" />
+            {summary}
+            <button
+              type="button"
+              disabled={!canCheckout}
+              onClick={() => void navigate({ to: '/pagamento' })}
+              className="mt-2 h-12 w-full rounded-full bg-primary text-sm font-bold text-primary-foreground disabled:opacity-50"
+            >
+              Conectar e finalizar
+            </button>
+          </section>
+        ) : null}
+      </div>
+    )
+  }
 
   return (
     <>
@@ -250,18 +443,9 @@ export function CartPage() {
         <h1 className="sr-only">Carrinho de NFTs</h1>
 
         {cart.isError && !cart.data ? (
-          <ErrorState error={cart.error} title="Não foi possível carregar o carrinho." onRetry={() => void cart.refetch()} retrying={cart.isFetching} />
+          loadError
         ) : !cart.isPending && items.length === 0 ? (
-          <EmptyState
-            icon={<ShoppingCart className="size-8" />}
-            title="Seu carrinho está vazio"
-            description="Explore o mercado e adicione NFTs para vê-los aqui."
-            action={
-              <Link to="/mercado" className={buttonVariants()}>
-                Explorar o mercado
-              </Link>
-            }
-          />
+          empty
         ) : (
           <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-24">
             <section aria-labelledby="cart-items-title" className="flex min-w-0 flex-col gap-3">
@@ -294,27 +478,7 @@ export function CartPage() {
                 Resumo da carteira
               </h2>
               <CouponForm appliedCode={cart.data?.couponCode ?? null} />
-              {couponIssue ? <InlineAlert tone="error">{couponIssue.message}</InlineAlert> : null}
-              {quote.isError ? (
-                <ErrorState
-                  error={quote.error}
-                  title="Não foi possível calcular o total."
-                  onRetry={() => void quote.refetch()}
-                  retrying={quote.isFetching}
-                  className="py-6"
-                />
-              ) : (
-                <SummaryRows
-                  quote={quote.data}
-                  loading={cart.isPending || (quote.isPending && items.length > 0)}
-                  updating={quote.isFetching}
-                />
-              )}
-              {blockingIssues.length ? (
-                <InlineAlert tone="error">
-                  {blockingIssues.map((issue) => issue.message).join(' ')} Ajuste o carrinho para continuar.
-                </InlineAlert>
-              ) : null}
+              {summary}
               <Button
                 size="lg"
                 className="h-11 w-full text-base"

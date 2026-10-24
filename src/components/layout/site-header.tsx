@@ -1,11 +1,7 @@
-import { useRef, useState, type FormEvent, type RefObject } from 'react'
-import { Link, useLocation, useNavigate } from '@tanstack/react-router'
-import { Heart, LogIn, LogOut, Menu, Search, ShoppingCart, User, Wallet } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Link, useLocation } from '@tanstack/react-router'
+import { Heart, LogIn, LogOut, Search, ShoppingCart, User, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +13,7 @@ import {
 import { announce } from '@/components/feedback/announce'
 import { useLogout, useSession } from '@/features/auth/session'
 import { useCart } from '@/features/cart/hooks'
+import { SearchDialog } from './search-dialog'
 
 const navItems = [
   { to: '/', label: 'Início', match: (path: string) => path === '/' },
@@ -34,54 +31,6 @@ export function Logo() {
     <Link to="/" className="text-sm font-extrabold tracking-[0.25em]" aria-label="Kurio — página inicial">
       KURIO
     </Link>
-  )
-}
-
-function SearchDialog({
-  open,
-  onOpenChange,
-  returnFocus,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  returnFocus: RefObject<HTMLButtonElement | null>
-}) {
-  const navigate = useNavigate()
-  const [value, setValue] = useState('')
-  const submit = (event: FormEvent) => {
-    event.preventDefault()
-    onOpenChange(false)
-    void navigate({ to: '/mercado', search: { q: value.trim() || undefined } })
-  }
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="top-24 translate-y-0 sm:max-w-xl"
-        onCloseAutoFocus={(event) => {
-          // Opened from a plain button (not a DialogTrigger): give focus back to it.
-          event.preventDefault()
-          returnFocus.current?.focus()
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle>Buscar NFTs</DialogTitle>
-          <DialogDescription>Busque por nome, coleção ou ID do token.</DialogDescription>
-        </DialogHeader>
-        <form role="search" onSubmit={submit} className="flex gap-2">
-          <label htmlFor="global-search" className="sr-only">
-            Termo de busca
-          </label>
-          <Input
-            id="global-search"
-            autoFocus
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-            placeholder="Ex.: Golden, #0042, Kurio Apes"
-          />
-          <Button type="submit">Buscar</Button>
-        </form>
-      </DialogContent>
-    </Dialog>
   )
 }
 
@@ -148,7 +97,6 @@ export function SiteHeader() {
   const { count } = useCart()
   const [searchOpen, setSearchOpen] = useState(false)
   const searchButton = useRef<HTMLButtonElement>(null)
-  const logout = useLogout()
 
   const loginLink = (
     <Link
@@ -166,7 +114,7 @@ export function SiteHeader() {
       <div className="flex h-[72px] items-center justify-between gap-4 border-b border-border">
         <Logo />
 
-        <nav aria-label="Principal" className="hidden h-full md:block">
+        <nav aria-label="Principal" className="h-full">
           <ul className="flex h-full items-center gap-10">
             {navItems.map((item) => {
               const active = item.match(pathname)
@@ -212,78 +160,8 @@ export function SiteHeader() {
               {count}
             </span>
           </Link>
-          <div className="hidden sm:block">{isPending ? <span className="skeleton block h-9 w-[86px]" aria-hidden /> : user ? <UserMenu /> : loginLink}</div>
+          <div>{isPending ? <span className="skeleton block h-9 w-[86px]" aria-hidden /> : user ? <UserMenu /> : loginLink}</div>
 
-          <Sheet>
-            <SheetTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex size-9 items-center justify-center rounded-sm hover:text-primary md:hidden"
-                aria-label="Abrir menu"
-              >
-                <Menu className="size-5" aria-hidden />
-              </button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[84vw] max-w-xs p-6">
-              <SheetHeader className="p-0">
-                <SheetTitle>Menu</SheetTitle>
-                <SheetDescription className="sr-only">Navegação principal e conta</SheetDescription>
-              </SheetHeader>
-              <nav aria-label="Principal (mobile)">
-                <ul className="flex flex-col gap-1">
-                  {navItems.map((item) => (
-                    <li key={item.to}>
-                      <SheetClose asChild>
-                        <Link
-                          to={item.to}
-                          aria-current={item.match(pathname) ? 'page' : undefined}
-                          className={cn(
-                            'block rounded-sm px-3 py-2.5 text-base',
-                            item.match(pathname) ? 'bg-secondary font-bold text-primary' : 'hover:bg-secondary',
-                          )}
-                        >
-                          {item.label}
-                        </Link>
-                      </SheetClose>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-              <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
-                {user ? (
-                  <>
-                    <p className="truncate px-3 text-sm text-subtle">{user.email}</p>
-                    <SheetClose asChild>
-                      <Link to="/perfil" className="rounded-sm px-3 py-2 hover:bg-secondary">
-                        Meu perfil
-                      </Link>
-                    </SheetClose>
-                    <SheetClose asChild>
-                      <Link to="/perfil/carteiras" className="rounded-sm px-3 py-2 hover:bg-secondary">
-                        Carteiras
-                      </Link>
-                    </SheetClose>
-                    <SheetClose asChild>
-                      <Link to="/perfil/favoritos" className="rounded-sm px-3 py-2 hover:bg-secondary">
-                        Lista de interesse
-                      </Link>
-                    </SheetClose>
-                    <SheetClose asChild>
-                      <button
-                        type="button"
-                        className="rounded-sm px-3 py-2 text-left text-primary hover:bg-secondary"
-                        onClick={() => logout.mutate(undefined, { onSettled: () => announce('Você saiu da sua conta.') })}
-                      >
-                        Sair
-                      </button>
-                    </SheetClose>
-                  </>
-                ) : (
-                  <SheetClose asChild>{loginLink}</SheetClose>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} returnFocus={searchButton} />

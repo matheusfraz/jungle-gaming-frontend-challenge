@@ -20,13 +20,14 @@ import { RegisterFlow } from './register-flow'
 
 type Mode = 'login' | 'register'
 
-function SocialButtons() {
+export function SocialButtons() {
   const [notice, setNotice] = useState(false)
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative flex items-center justify-center">
-        <span className="absolute inset-x-[-1.5rem] top-1/2 h-px bg-border" aria-hidden />
-        <span className="relative bg-card px-3 text-xs">Ou continue com</span>
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-border" aria-hidden />
+        <span className="text-xs">Ou continue com</span>
+        <span className="h-px flex-1 bg-border" aria-hidden />
       </div>
       {(['Google', 'Facebook'] as const).map((provider) => (
         <button
@@ -48,7 +49,7 @@ function SocialButtons() {
   )
 }
 
-function LoginForm({ onSuccess }: { onSuccess: () => void }) {
+export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const login = useLogin()
   const [formError, setFormError] = useState<string>()
   const [forgot, setForgot] = useState(false)

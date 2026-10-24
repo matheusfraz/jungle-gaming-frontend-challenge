@@ -1,4 +1,4 @@
-import { expect, isMobile, openApp, test } from '../support/fixtures'
+import { expect, isMobile, loginForm, openApp, test } from '../support/fixtures'
 
 test.describe('11. Teclado, foco de diálogos e validação de formulários', () => {
   test('link de pular conteúdo e foco visível', async ({ page }) => {
@@ -32,7 +32,7 @@ test.describe('11. Teclado, foco de diálogos e validação de formulários', ()
 
   test('formulário de login: erros associados aos campos', async ({ page }) => {
     await openApp(page, '/entrar')
-    const dialog = page.getByRole('dialog')
+    const dialog = loginForm(page)
     await dialog.getByRole('button', { name: 'Entrar', exact: true }).click()
     const email = dialog.getByPlaceholder('contato@email.com')
     await expect(email).toHaveAttribute('aria-invalid', 'true')

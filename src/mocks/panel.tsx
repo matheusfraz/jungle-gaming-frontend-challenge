@@ -54,11 +54,11 @@ export default function MockPanel() {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="fixed bottom-4 left-4 z-40 inline-flex items-center gap-2 rounded-full border border-primary bg-background/95 px-3 py-2 text-xs font-bold text-primary shadow-lg"
+          className="fixed top-[42%] left-0 z-40 inline-flex items-center gap-2 rounded-r-full border border-l-0 border-primary bg-background/95 px-2 py-2 text-xs font-bold text-primary shadow-lg md:top-auto md:bottom-4 md:left-4 md:rounded-full md:border-l md:px-3"
           data-testid="mock-panel-trigger"
         >
           <FlaskConical className="size-4" aria-hidden />
-          Mocks · {scenarios[scenario].label}
+          <span className="max-md:sr-only">Mocks · {scenarios[scenario].label}</span>
           <span className="sr-only"> — abrir painel de cenários</span>
         </button>
       </SheetTrigger>

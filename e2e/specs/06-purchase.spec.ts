@@ -1,4 +1,4 @@
-import { addToCartFromDetail, cards, confirmButton, expect, login, openApp, reachReview, test, USERS } from '../support/fixtures'
+import { USERS, addToCartFromDetail, buyButton, cards, confirmButton, expect, isMobile, login, openApp, reachReview, test } from '../support/fixtures'
 
 test.describe('6. Compra completa', () => {
   test('do catálogo ao recibo confirmado', async ({ page, mocks }) => {
@@ -7,7 +7,7 @@ test.describe('6. Compra completa', () => {
     await cards(page).filter({ hasText: 'Ivory Baron #088' }).getByRole('link').click()
     await expect(page.getByRole('heading', { level: 1, name: 'Ivory Baron #088' })).toBeVisible()
     await page.getByRole('button', { name: 'Aumentar quantidade' }).click()
-    await page.getByRole('button', { name: 'COMPRAR' }).click()
+    await buyButton(page).click()
     await expect(page).toHaveURL(/\/carrinho$/)
 
     await reachReview(page)
@@ -65,7 +65,7 @@ test.describe('6. Compra completa', () => {
     // No explicit "Conectar carteira" click: the main button asks the wallet to connect.
     await page.getByRole('button', { name: 'Confirmar compra', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Revise seu pedido' })).toBeVisible()
-    await expect(page.getByText(/conectada em/)).toBeVisible()
+    await expect(page.getByText(isMobile(page) ? /· conectada/ : /conectada em/)).toBeVisible()
     await confirmButton(page).click()
     await expect(page.getByTestId('order-pending')).toBeVisible()
     await mocks.settleOrders()

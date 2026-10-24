@@ -26,9 +26,11 @@ const clearPending = () => removeStorage(storageKeys.pendingSignup, 'session')
 function RegisterForm({
   onCodeSent,
   initialError,
+  submitLabel,
 }: {
   onCodeSent: (pending: PendingSignup) => void
   initialError?: string
+  submitLabel: string
 }) {
   const register = useRegister()
   const [formError, setFormError] = useState<string | undefined>(initialError)
@@ -71,7 +73,7 @@ function RegisterForm({
         )}
       </FormField>
       <Button type="submit" size="lg" className="h-11 text-sm" disabled={register.isPending}>
-        {register.isPending ? 'Enviando código…' : 'Criar conta'}
+        {register.isPending ? 'Enviando código…' : submitLabel}
       </Button>
     </form>
   )
@@ -223,7 +225,7 @@ function VerifyEmailStep({
  * Sign-up in two steps: form → e-mail confirmation code. The pending step is
  * kept in sessionStorage so a refresh does not lose it.
  */
-export function RegisterFlow({ onSuccess }: { onSuccess: () => void }) {
+export function RegisterFlow({ onSuccess, submitLabel = 'Criar conta' }: { onSuccess: () => void; submitLabel?: string }) {
   const [pending, setPending] = useState<PendingSignup | null>(() =>
     readStorage<PendingSignup>(storageKeys.pendingSignup, 'session'),
   )
@@ -247,6 +249,7 @@ export function RegisterFlow({ onSuccess }: { onSuccess: () => void }) {
     <RegisterForm
       key={backError ?? 'form'}
       initialError={backError}
+      submitLabel={submitLabel}
       onCodeSent={(next) => {
         savePending(next)
         setBackError(undefined)

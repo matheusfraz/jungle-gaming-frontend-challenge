@@ -56,7 +56,7 @@ test.describe('Responsividade: sem overflow horizontal em 390, 768 e 1440 px', (
     // Order confirmation (receipt dialog) at phone width.
     await page.setViewportSize({ width: 390, height: 900 })
     await openApp(page, '/pagamento')
-    await page.getByRole('button', { name: 'Conectar carteira' }).click()
+    // Mobile layout: the main button connects the wallet and opens the review.
     await page.getByRole('button', { name: 'Confirmar compra', exact: true }).click()
     await page.getByRole('button', { name: /^Confirmar compra ·/ }).click()
     await expect(page.getByTestId('order-pending')).toBeVisible()

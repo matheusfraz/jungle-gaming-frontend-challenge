@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Heart, Mail, Search, Star } from 'lucide-react'
 import { toast } from 'sonner'
-import { editionLabels, networkLabels, type EditionId, type NftDetail } from '@/contracts/nft'
+import { networkLabels, type EditionId, type NftDetail } from '@/contracts/nft'
 import { formatEth } from '@/lib/money'
 import { cn } from '@/lib/utils'
 import { errorMessage, isApiError } from '@/lib/http/client'
@@ -21,6 +21,9 @@ import { useAddToCart, useCart } from '@/features/cart/hooks'
 import { useFavorites, useToggleFavorite } from '@/features/favorites/hooks'
 import { nftDetailQueryOptions } from '@/features/catalog/api'
 import { MoreFromCollection, NftCarousel } from './more-from-collection'
+import { EditionPicker } from './edition-picker'
+import { MobileNftDetail } from './mobile-nft-detail'
+import { useIsDesktop } from '@/hooks/use-is-desktop'
 
 const EDITION_PREFERENCE: EditionId[] = ['1-50', '1-10', 'open', '1-1']
 
@@ -166,6 +169,7 @@ export function NftDetailPage({
   const toggleFavorite = useToggleFavorite()
   const [quantity, setQuantity] = useState(1)
   const lastPrice = useRef<string | null>(null)
+  const isDesktop = useIsDesktop()
 
   useDocumentTitle(nft?.name)
 
@@ -244,12 +248,53 @@ export function NftDetailPage({
     )
   }
 
+  const selectEdition = (id: EditionId) => {
+    setQuantity(1)
+    onEditionChange(id)
+  }
+
+  const onAddOnly = () => {
+    addToCart.mutate(
+      { nftId: nft.id, editionId, quantity: effectiveQuantity },
+      {
+        onSuccess: () => {
+          toast.success(`${nft.name} adicionado ao carrinho.`)
+          announce(`${nft.name} adicionado ao carrinho.`)
+        },
+        onError: (error) => {
+          toast.error(errorMessage(error))
+          announce(errorMessage(error), 'assertive')
+        },
+      },
+    )
+  }
+
   const onFavorite = () => {
     if (!user) {
       void navigate({ to: '/entrar', search: { redirect: location.href } })
       return
     }
     toggleFavorite.mutate({ nftId: nft.id, favorite: !favorite, name: nft.name })
+  }
+
+  if (!isDesktop) {
+    return (
+      <MobileNftDetail
+        nft={nft}
+        editionId={editionId}
+        onSelectEdition={selectEdition}
+        editionMessage={editionMessage}
+        editionWarning={edition.available === 0 || maxQuantity === 0}
+        quantity={effectiveQuantity}
+        maxQuantity={maxQuantity}
+        onQuantityChange={setQuantity}
+        favorite={favorite}
+        onFavorite={onFavorite}
+        onBuy={onBuy}
+        onAddOnly={onAddOnly}
+        adding={addToCart.isPending}
+      />
+    )
   }
 
   return (
@@ -279,39 +324,13 @@ export function NftDetailPage({
               <p className="text-[13px] leading-6 text-muted-foreground">{nft.description}</p>
             </div>
 
-            <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-sm font-bold">Edição:</legend>
-              <div className="flex flex-wrap gap-2">
-                {nft.editions.map((item) => {
-                  const selected = item.id === editionId
-                  const soldOut = item.available === 0
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      aria-pressed={selected}
-                      aria-disabled={soldOut}
-                      aria-label={`Edição ${item.label}${soldOut ? ' (esgotada)' : ''}`}
-                      onClick={() => {
-                        if (soldOut) return
-                        setQuantity(1)
-                        onEditionChange(item.id)
-                      }}
-                      className={cn(
-                        'rounded-full border px-2.5 py-1 text-xs tracking-wide transition-colors',
-                        selected ? 'border-2 border-primary text-foreground' : 'border-border text-muted-foreground',
-                        soldOut ? 'cursor-not-allowed line-through opacity-50' : 'hover:border-primary',
-                      )}
-                    >
-                      {editionLabels[item.id]}
-                    </button>
-                  )
-                })}
-              </div>
-              <p className={cn('text-xs', edition.available === 0 || maxQuantity === 0 ? 'text-destructive' : 'text-subtle')} aria-live="polite">
-                {editionMessage}
-              </p>
-            </fieldset>
+            <EditionPicker
+              editions={nft.editions}
+              selected={editionId}
+              onSelect={selectEdition}
+              message={editionMessage}
+              warning={edition.available === 0 || maxQuantity === 0}
+            />
 
             <div className="flex flex-wrap items-center justify-between gap-4">
               <QuantityStepper

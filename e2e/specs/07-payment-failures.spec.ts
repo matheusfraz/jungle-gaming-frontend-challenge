@@ -1,4 +1,4 @@
-import { addToCartFromDetail, confirmButton, expect, login, reachReview, test, USERS } from '../support/fixtures'
+import { USERS, addToCartFromDetail, confirmButton, expect, isMobile, login, reachReview, test } from '../support/fixtures'
 
 test.describe('7. Falha de pagamento, clique repetido e timeout', () => {
   test.describe('pagamento recusado', () => {
@@ -48,6 +48,7 @@ test.describe('7. Falha de pagamento, clique repetido e timeout', () => {
   test.describe('carteira recusa a conexão', () => {
     test.use({ scenario: 'wallet-rejected' })
     test('recusa, nova tentativa e desconexão', async ({ page, mocks }) => {
+      test.skip(isMobile(page), 'no mobile conexão/desconexão ficam no menu da carteira; a recusa é coberta pela compra')
       await login(page, USERS.ana)
       await addToCartFromDetail(page, 'emerald-ape-042')
       await page.getByRole('button', { name: 'Conectar e finalizar' }).click()

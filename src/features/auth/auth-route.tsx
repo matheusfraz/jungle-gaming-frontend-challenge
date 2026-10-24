@@ -1,9 +1,11 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useDocumentTitle } from '@/components/common/use-document-title'
 import { HomeView } from '@/features/catalog/components/home-view'
+import { useIsDesktop } from '@/hooks/use-is-desktop'
 import { AuthDialog } from './components/auth-dialog'
+import { AuthScreen } from './components/auth-screen'
 
-/** Login/register render as a dialog over the home page, like the Figma frames. */
+/** Desktop: dialog over the home page. Mobile: full-screen page. Both follow their Figma frames. */
 export function AuthRoute({
   mode,
   redirect,
@@ -15,6 +17,8 @@ export function AuthRoute({
 }) {
   useDocumentTitle(mode === 'login' ? 'Entrar' : 'Criar conta')
   const navigate = useNavigate()
+  const isDesktop = useIsDesktop()
+  if (!isDesktop) return <AuthScreen mode={mode} redirect={redirect} reason={reason} />
   return (
     <>
       <div inert>

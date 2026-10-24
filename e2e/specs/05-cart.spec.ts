@@ -1,4 +1,4 @@
-import { addToCartFromDetail, expect, login, openApp, test, USERS } from '../support/fixtures'
+import { addToCartFromDetail, buyButton, expect, isMobile, login, openApp, test, USERS } from '../support/fixtures'
 
 test.describe('5. Carrinho: quantidades, remoção, cupom e persistência', () => {
   test('quantidade, cupom inválido/expirado/válido e resumo coerente', async ({ page }) => {
@@ -34,7 +34,7 @@ test.describe('5. Carrinho: quantidades, remoção, cupom e persistência', () =
   test('limite de disponibilidade por edição', async ({ page }) => {
     await openApp(page, '/nft/emerald-ape-042?edicao=1-10')
     await page.getByRole('button', { name: 'Aumentar quantidade' }).click()
-    await page.getByRole('button', { name: 'COMPRAR' }).click()
+    await buyButton(page).click()
     await expect(page).toHaveURL(/\/carrinho$/)
     await expect(page.getByRole('button', { name: /Aumentar quantidade de/ })).toBeDisabled()
   })
@@ -49,7 +49,7 @@ test.describe('5. Carrinho: quantidades, remoção, cupom e persistência', () =
     await expect(page).toHaveURL(/\/carrinho$/)
     await expect(page.getByTestId('cart-row')).toHaveCount(1)
     await expect(page.getByTestId('cart-row')).toContainText('Golden Beat #207')
-    await expect(page.getByTestId('header-cart')).toHaveAttribute('aria-label', 'Carrinho, 3 itens')
+    if (!isMobile(page)) await expect(page.getByTestId('header-cart')).toHaveAttribute('aria-label', 'Carrinho, 3 itens')
 
     await page.getByRole('button', { name: 'Remover Golden Beat #207 do carrinho' }).click()
     await expect(page.getByRole('heading', { name: 'Seu carrinho está vazio' })).toBeVisible()

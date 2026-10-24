@@ -7,6 +7,10 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { LiveRegion } from '@/components/feedback/live-region'
 import { SiteFooter } from '@/components/layout/site-footer'
 import { SiteHeader } from '@/components/layout/site-header'
+import { MobileBrandBar, MobileTabBar } from '@/components/layout/mobile-chrome'
+import { mobileChromeFor } from '@/components/layout/mobile-chrome-rules'
+import { cn } from '@/lib/utils'
+import { useIsDesktop } from '@/hooks/use-is-desktop'
 import { useSessionWatcher } from '@/features/auth/use-session-watcher'
 import { useRealtimeSync } from '@/realtime/use-realtime-sync'
 
@@ -33,6 +37,9 @@ function RootLayout() {
   useRealtimeSync()
   useSessionWatcher()
   useRouteFocus()
+  const isDesktop = useIsDesktop()
+  const { pathname } = useLocation()
+  const mobile = mobileChromeFor(pathname)
 
   return (
     <TooltipProvider>
@@ -43,13 +50,19 @@ function RootLayout() {
         Pular para o conteúdo
       </a>
       <div className="flex min-h-screen flex-col overflow-x-clip">
-        <SiteHeader />
-        <main id="conteudo" tabIndex={-1} className="flex-1 outline-none">
+        {isDesktop ? <SiteHeader /> : mobile.brandBar ? <MobileBrandBar /> : null}
+        <main
+          id="conteudo"
+          tabIndex={-1}
+          className={cn('flex-1 outline-none', !isDesktop && mobile.tabBar && 'pb-24')}
+        >
           <Outlet />
         </main>
-        <SiteFooter />
+        {isDesktop || mobile.footer ? <SiteFooter /> : null}
       </div>
-      <Toaster position="bottom-right" closeButton />
+      {!isDesktop && mobile.tabBar ? <MobileTabBar /> : null}
+      {/* Mobile screens have fixed bottom bars, so toasts go to the top there. */}
+      <Toaster position={isDesktop ? 'bottom-right' : 'top-center'} closeButton mobileOffset={{ top: 72 }} />
       <LiveRegion />
       {MockPanel ? (
         <Suspense fallback={null}>

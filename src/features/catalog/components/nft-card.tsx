@@ -65,7 +65,7 @@ export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?:
 
   return (
     <article className="group relative flex flex-col gap-3" data-testid="nft-card">
-      <div className="relative bg-card px-1 pt-4 pb-6">
+      <div className="relative rounded-2xl bg-card p-2 md:rounded-none md:px-1 md:pt-4 md:pb-6">
         {nft.rare ? (
           <span className="absolute top-3 left-0 z-10 bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">
             RARO
@@ -86,15 +86,17 @@ export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?:
           decoding="async"
           className="aspect-square w-full rounded-xl object-cover"
         />
+        {/* Desktop: cart / favorite / zoom on hover. Mobile frame: only the heart, top-right. */}
         <div
           className={cn(
-            'absolute right-2 bottom-2 z-10 flex gap-1.5 transition-opacity',
-            'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100',
+            'absolute z-10 flex gap-1.5 transition-opacity',
+            'max-md:top-4 max-md:right-4 md:right-2 md:bottom-2',
+            'md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 md:[@media(hover:none)]:opacity-100',
           )}
         >
           <button
             type="button"
-            className={actionButton}
+            className={cn(actionButton, 'max-md:hidden')}
             onClick={onAddToCart}
             disabled={nft.soldOut || addToCart.isPending}
             aria-label={`Adicionar ${nft.name} ao carrinho`}
@@ -103,7 +105,11 @@ export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?:
           </button>
           <button
             type="button"
-            className={cn(actionButton, favorite && 'border-primary text-primary')}
+            className={cn(
+              actionButton,
+              'max-md:size-9 max-md:rounded-full max-md:border-0 max-md:bg-background/70 max-md:text-primary',
+              favorite && 'border-primary text-primary',
+            )}
             onClick={onFavorite}
             aria-pressed={favorite}
             aria-label={favorite ? `Remover ${nft.name} dos favoritos` : `Favoritar ${nft.name}`}
@@ -112,7 +118,7 @@ export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?:
           </button>
           <button
             type="button"
-            className={actionButton}
+            className={cn(actionButton, 'max-md:hidden')}
             onClick={() => setZoomOpen(true)}
             aria-label={`Ampliar imagem de ${nft.name}`}
           >
@@ -147,7 +153,7 @@ export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?:
 export function NftCardSkeleton() {
   return (
     <div className="flex flex-col gap-3" aria-hidden data-testid="nft-card-skeleton">
-      <div className="bg-card px-1 pt-4 pb-6">
+      <div className="rounded-2xl bg-card p-2 md:rounded-none md:px-1 md:pt-4 md:pb-6">
         <div className="skeleton aspect-square w-full rounded-xl" />
       </div>
       <div className="flex flex-col gap-2">

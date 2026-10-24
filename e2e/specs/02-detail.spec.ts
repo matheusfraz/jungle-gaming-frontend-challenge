@@ -1,4 +1,4 @@
-import { expect, openApp, test } from '../support/fixtures'
+import { buyButton, expect, openApp, test } from '../support/fixtures'
 
 test.describe('2. Detalhe do NFT: acesso direto e recurso inexistente', () => {
   test('acesso direto mostra galeria, edição, limite de quantidade e edição esgotada', async ({ page }) => {
@@ -37,7 +37,7 @@ test.describe('2. Detalhe do NFT: acesso direto e recurso inexistente', () => {
   test('NFT totalmente esgotado bloqueia a compra', async ({ page }) => {
     await openApp(page, '/nft/silent-baron-420')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'COMPRAR' })).toBeDisabled()
+    await expect(buyButton(page)).toBeDisabled()
   })
 
   test('rota inexistente mostra a página 404', async ({ page }) => {

@@ -105,20 +105,30 @@ export async function openApp(page: Page, path = '/') {
   await expect(page.locator('#conteudo')).toBeVisible()
 }
 
+/** Login form: a dialog over the home on desktop, a full page on mobile. */
+export function loginForm(page: Page) {
+  return page.getByRole('form', { name: 'Entrar' })
+}
+
+export function registerForm(page: Page) {
+  return page.getByRole('form', { name: 'Criar conta' })
+}
+
 export async function login(page: Page, user: { email: string; password: string }, path = '/entrar') {
   await openApp(page, path)
-  const dialog = page.getByRole('dialog')
-  await dialog.getByPlaceholder('contato@email.com').fill(user.email)
-  await dialog.getByPlaceholder('Senha').fill(user.password)
-  await dialog.getByRole('button', { name: 'Entrar', exact: true }).click()
-  await expect(page.getByRole('dialog')).toHaveCount(0)
+  const form = loginForm(page)
+  await form.getByPlaceholder('contato@email.com').fill(user.email)
+  await form.getByPlaceholder('Senha').fill(user.password)
+  await form.getByRole('button', { name: 'Entrar', exact: true }).click()
+  await expect(loginForm(page)).toHaveCount(0)
   await page.waitForFunction(() => Boolean(window.localStorage.getItem('kurio:token')))
 }
 
 export async function logout(page: Page) {
   if (isMobile(page)) {
-    await page.getByRole('button', { name: 'Abrir menu' }).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'Sair' }).click()
+    // Mobile: no header menu; "Sair" lives in the profile navigation.
+    await openApp(page, '/perfil')
+    await page.getByRole('button', { name: 'Sair' }).click()
   } else {
     await page.getByTestId('user-menu').click()
     await page.getByRole('menuitem', { name: 'Sair' }).click()
@@ -149,18 +159,26 @@ export async function addToCartFromDetail(page: Page, nftId: string, quantity = 
   for (let index = 1; index < quantity; index += 1) {
     await page.getByRole('button', { name: 'Aumentar quantidade' }).click()
   }
-  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await buyButton(page).click()
   await expect(page).toHaveURL(/\/carrinho$/)
   await expect(page.getByTestId('cart-row').first()).toBeVisible()
+}
+
+/** "COMPRAR" on desktop, "Comprar NFT" in the mobile purchase bar. */
+export function buyButton(page: Page) {
+  return page.getByRole('button', { name: /^comprar( nft)?$/i })
 }
 
 /** From the cart, go to checkout, connect the wallet and reach the review step. */
 export async function reachReview(page: Page) {
   await page.getByRole('button', { name: 'Conectar e finalizar' }).click()
   await expect(page).toHaveURL(/\/pagamento$/)
-  await expect(page.getByLabel('Endereço da carteira')).toHaveValue(/^0x/)
-  await page.getByRole('button', { name: 'Conectar carteira' }).click()
-  await expect(page.getByText(/conectada em/)).toBeVisible()
+  await expect(page.locator('main').getByLabel('Endereço da carteira')).toHaveValue(/^0x/)
+  if (!isMobile(page)) {
+    await page.getByRole('button', { name: 'Conectar carteira' }).click()
+    await expect(page.getByText(/conectada em/)).toBeVisible()
+  }
+  // On mobile "Confirmar compra" asks the wallet to connect by itself.
   await page.getByRole('button', { name: 'Confirmar compra', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Revise seu pedido' })).toBeVisible()
 }

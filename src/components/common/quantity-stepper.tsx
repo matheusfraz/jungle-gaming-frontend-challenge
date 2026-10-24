@@ -10,6 +10,7 @@ export function QuantityStepper({
   label,
   disabled,
   size = 'md',
+  tone = 'primary',
 }: {
   value: number
   min?: number
@@ -18,10 +19,13 @@ export function QuantityStepper({
   label: string
   disabled?: boolean
   size?: 'sm' | 'md'
+  /** `muted`: dark round buttons (mobile cart frame). */
+  tone?: 'primary' | 'muted'
 }) {
   const button = cn(
-    'inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40',
-    size === 'md' ? 'size-7' : 'size-6',
+    'inline-flex items-center justify-center rounded-full transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40',
+    tone === 'primary' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground',
+    size === 'md' ? 'size-7' : tone === 'muted' ? 'size-8' : 'size-6',
   )
   return (
     <div role="group" aria-label={label} className="inline-flex items-center gap-3">

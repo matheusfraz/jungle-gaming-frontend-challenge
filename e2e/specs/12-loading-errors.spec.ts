@@ -1,4 +1,4 @@
-import { cards, expect, openApp, test } from '../support/fixtures'
+import { buyButton, cards, expect, openApp, test } from '../support/fixtures'
 
 test.describe('12. Skeletons, falhas e recuperação', () => {
   test.describe('rede lenta', () => {
@@ -13,7 +13,7 @@ test.describe('12. Skeletons, falhas e recuperação', () => {
       await expect(page.getByLabel('Carregando NFT')).toBeVisible()
       await expect(page.getByRole('heading', { level: 1, name: 'Emerald Ape #042' })).toBeVisible({ timeout: 15_000 })
 
-      await page.getByRole('button', { name: 'COMPRAR' }).click()
+      await buyButton(page).click()
       await expect(page).toHaveURL(/\/carrinho$/, { timeout: 15_000 })
       await expect(page.getByTestId('order-summary')).toHaveAttribute('aria-busy', 'true')
       await expect(page.getByTestId('summary-total')).toHaveText('1.206 ETH', { timeout: 15_000 })

@@ -3,11 +3,11 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle2, Loader2, PlugZap, Unplug } from 'lucide-react'
+import { CheckCircle2, Loader2, MoreVertical, PlugZap, Unplug, Wallet as WalletIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { collectorFormSchema, type CollectorForm } from '@/contracts/checkout'
 import { quoteStaleDetailsSchema, type CreateOrderInput, type Quote, type QuoteLine } from '@/contracts/commerce'
-import { walletTypeLabels, type Wallet, type WalletsResponse } from '@/contracts/account'
+import { walletTypeLabels, type Wallet, type WalletsResponse, type WalletType } from '@/contracts/account'
 import { editionLabels, networkLabels } from '@/contracts/nft'
 import { errorMessage, isApiError } from '@/lib/http/client'
 import { applyServerErrors } from '@/lib/forms'
@@ -21,6 +21,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Breadcrumbs } from '@/components/common/breadcrumbs'
+import { MobileTopBar } from '@/components/layout/mobile-chrome'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { useIsDesktop } from '@/hooks/use-is-desktop'
 import { FormField } from '@/components/common/form-field'
 import { EmptyState, ErrorState, InlineAlert } from '@/components/common/states'
 import { WalletBadges } from '@/components/common/wallet-badges'
@@ -105,6 +108,9 @@ export function CheckoutPage() {
   const network = form.watch('network')
 
   const [step, setStep] = useState<'form' | 'review'>('form')
+  const isDesktop = useIsDesktop()
+  /** Mobile: the collector data (filled from the wallet) is collapsed by default. */
+  const [collectorOpen, setCollectorOpen] = useState(false)
   const [walletId, setWalletId] = useState<string | null>(ownDraft?.walletId ?? null)
   const [useOtherWallet, setUseOtherWallet] = useState(ownDraft?.useOtherWallet ?? false)
   const [walletError, setWalletError] = useState<string>()
@@ -242,7 +248,10 @@ export function CheckoutPage() {
       setChangedNotice(null)
       await goToReview()
     },
-    () => announce('Revise os campos destacados no formulário.', 'assertive'),
+    () => {
+      setCollectorOpen(true)
+      announce('Revise os campos destacados no formulário.', 'assertive')
+    },
   )
 
   const send = async (attempt: CheckoutAttempt, tries = 0): Promise<void> => {
@@ -451,19 +460,8 @@ export function CheckoutPage() {
   const busy = submitState === 'sending' || submitState === 'retrying'
   const values = form.getValues()
 
-  return (
-    <div className="container-page flex flex-col gap-6 py-6">
-      <Breadcrumbs items={[{ label: 'Início', to: '/' }, { label: 'Mercado', to: '/mercado' }, { label: 'Pagamento' }]} />
-      <h1 className="sr-only">Pagamento</h1>
-
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_490px]">
-        {/* ---------- Left: collector profile or review ---------- */}
-        {step === 'form' ? (
-          <form id="collector-form" onSubmit={onContinue} noValidate aria-labelledby="collector-title" className="flex flex-col gap-6">
-            <h2 id="collector-title" className="text-lg font-bold tracking-wide">
-              Perfil do colecionador
-            </h2>
-            {submitError ? <InlineAlert tone="error">{submitError}</InlineAlert> : null}
+  const collectorFields = (
+    <>
             <div className="grid gap-x-7 gap-y-5 md:grid-cols-2">
               <FormField label="Nome de exibição" required error={errors.displayName?.message}>
                 {(props) => <Input {...props} autoComplete="name" {...form.register('displayName')} />}
@@ -544,15 +542,10 @@ export function CheckoutPage() {
             <FormField label="Observação do colecionador (opcional)" error={errors.note?.message} className="max-w-[420px]">
               {(props) => <Textarea {...props} rows={6} className="min-h-[180px] rounded-sm" {...form.register('note')} />}
             </FormField>
-          </form>
-        ) : (
-          <section aria-labelledby="review-title" className="flex flex-col gap-6">
-            <h2 id="review-title" ref={reviewHeading} tabIndex={-1} className="text-lg font-bold tracking-wide outline-none">
-              Revise seu pedido
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Confira os dados abaixo. Os valores foram revalidados agora e serão verificados de novo ao confirmar.
-            </p>
+    </>
+  )
+
+  const reviewDetails = (
             <dl className="grid gap-4 rounded-sm bg-card p-5 text-sm sm:grid-cols-2">
               {(
                 [
@@ -574,6 +567,294 @@ export function CheckoutPage() {
                 </div>
               ))}
             </dl>
+  )
+
+  const walletType = form.watch('walletType')
+
+  if (!isDesktop) {
+    const providerIcon: Record<WalletType, React.ReactNode> = {
+      walletconnect: <span className="text-sm font-bold text-primary">W</span>,
+      metamask: <span className="text-sm font-bold text-primary">M</span>,
+      coinbase: <WalletIcon className="size-5 text-primary" aria-hidden />,
+    }
+    return (
+      <div className="flex min-h-svh flex-col">
+        <MobileTopBar title="Pagamento com carteira" fallback="/carrinho" />
+        <div className="flex flex-1 flex-col gap-4 px-4 pt-2 pb-36">
+          <CartNotices />
+          {stale ? (
+            <InlineAlert
+              tone="warning"
+              action={
+                <Button size="sm" onClick={() => void goToReview(quote)} disabled={quoteMutation.isPending}>
+                  {quoteMutation.isPending ? 'Atualizando…' : 'Atualizar revisão'}
+                </Button>
+              }
+            >
+              Os valores mudaram desde a sua revisão ({stale.join('; ')}). Atualize para ver o novo total antes de confirmar.
+            </InlineAlert>
+          ) : null}
+          {changedNotice ? (
+            <InlineAlert tone="warning">
+              Valores atualizados: {changedNotice.join('; ')}. Confira o novo total e confirme novamente.
+            </InlineAlert>
+          ) : null}
+          {submitError ? <InlineAlert tone="error">{submitError}</InlineAlert> : null}
+          {blockingIssues.length ? (
+            <InlineAlert
+              tone="error"
+              action={
+                <Link to="/carrinho" className={buttonVariants({ size: 'sm', variant: 'outline' })}>
+                  Ajustar carrinho
+                </Link>
+              }
+            >
+              {blockingIssues.map((issue) => issue.message).join(' ')}
+            </InlineAlert>
+          ) : null}
+
+          {step === 'form' ? (
+            <>
+              <section aria-labelledby="connected-title" className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 id="connected-title" className="text-sm font-bold">
+                    Carteira conectada
+                  </h2>
+                  <Link to="/perfil/carteiras" className="text-xs font-bold text-primary">
+                    Trocar carteira
+                  </Link>
+                </div>
+                {wallets.isPending ? (
+                  <div className="skeleton h-20 w-full rounded-2xl" aria-hidden />
+                ) : registered.length === 0 ? (
+                  <InlineAlert
+                    tone="info"
+                    action={
+                      <Link to="/perfil/carteiras" className={buttonVariants({ size: 'sm' })}>
+                        Cadastrar carteira
+                      </Link>
+                    }
+                  >
+                    Você ainda não tem carteiras cadastradas. Cadastre uma para pagar.
+                  </InlineAlert>
+                ) : (
+                  <RadioGroup
+                    value={selectedWallet?.id ?? ''}
+                    onValueChange={(id) => {
+                      setWalletId(id)
+                      setWalletError(undefined)
+                      const wallet = registered.find((item) => item.id === id)
+                      if (wallet) fillFromWallet(wallet, useOtherWallet)
+                    }}
+                    aria-label="Carteira de pagamento"
+                    className="grid-cols-[minmax(0,1fr)] gap-3"
+                  >
+                    {registered.map((wallet) => {
+                      const status = wallets.data?.connections[wallet.id] ?? 'disconnected'
+                      const selected = wallet.id === selectedWallet?.id
+                      const ens = wallet.secondaryAddress.endsWith('.eth') || wallet.secondaryAddress.endsWith('.xyz')
+                      return (
+                        <div
+                          key={wallet.id}
+                          className={cn(
+                            'flex items-center gap-4 rounded-2xl bg-card py-3 pr-2 pl-4',
+                            selected && 'ring-1 ring-primary/60',
+                          )}
+                        >
+                          <RadioGroupItem id={`wallet-${wallet.id}`} value={wallet.id} />
+                          <label htmlFor={`wallet-${wallet.id}`} className="flex min-w-0 flex-1 cursor-pointer flex-col gap-0.5">
+                            <span className="truncate text-sm font-bold">{wallet.nickname}</span>
+                            <span className="truncate font-mono text-xs text-muted-foreground">
+                              {ens ? wallet.secondaryAddress : shortAddress(wallet.address)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              Rede {networkLabels[wallet.network]} ·{' '}
+                              <span className={status === 'connected' ? 'text-success' : 'text-subtle'}>
+                                {status === 'connected' ? 'Conectada' : 'Desconectada'}
+                              </span>
+                            </span>
+                          </label>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-primary hover:bg-secondary"
+                                aria-label={`Opções da carteira ${wallet.nickname}`}
+                              >
+                                <MoreVertical className="size-5" aria-hidden />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {selected ? (
+                                status === 'connected' ? (
+                                  <DropdownMenuItem onSelect={onDisconnect}>Desconectar</DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem onSelect={onConnect}>Conectar</DropdownMenuItem>
+                                )
+                              ) : (
+                                <DropdownMenuItem
+                                  onSelect={() => {
+                                    setWalletId(wallet.id)
+                                    fillFromWallet(wallet, useOtherWallet)
+                                  }}
+                                >
+                                  Usar esta carteira
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem asChild>
+                                <Link to="/perfil/carteiras">Editar carteiras</Link>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      )
+                    })}
+                  </RadioGroup>
+                )}
+              </section>
+
+              <section aria-labelledby="provider-title" className="flex flex-col gap-3">
+                <h2 id="provider-title" className="text-sm font-bold">
+                  Carteira e rede
+                </h2>
+                <RadioGroup
+                  value={walletType}
+                  onValueChange={(value) => form.setValue('walletType', value as WalletType, { shouldDirty: true, shouldValidate: true })}
+                  aria-label="Aplicativo de carteira"
+                  className="grid-cols-[minmax(0,1fr)] gap-3"
+                >
+                  {(['walletconnect', 'metamask', 'coinbase'] as const).map((type) => (
+                    <label
+                      key={type}
+                      htmlFor={`provider-${type}`}
+                      className="flex cursor-pointer items-center gap-4 rounded-2xl bg-card px-4 py-3"
+                    >
+                      <span aria-hidden className="inline-flex size-10 items-center justify-center rounded-full bg-secondary">
+                        {providerIcon[type]}
+                      </span>
+                      <span className="flex-1 text-sm">{walletTypeLabels[type]}</span>
+                      <RadioGroupItem id={`provider-${type}`} value={type} />
+                    </label>
+                  ))}
+                </RadioGroup>
+              </section>
+
+              {walletError ? (
+                <p role="alert" className="text-sm text-destructive">
+                  {walletError}
+                </p>
+              ) : null}
+
+              <details
+                open={collectorOpen}
+                onToggle={(event) => setCollectorOpen((event.currentTarget as HTMLDetailsElement).open)}
+                className="group rounded-2xl bg-card px-4 py-3"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
+                  Dados do colecionador
+                  <span className="text-xs font-normal text-primary group-open:hidden">Editar</span>
+                </summary>
+                <form id="collector-form" onSubmit={onContinue} noValidate aria-label="Perfil do colecionador" className="mt-4 flex flex-col gap-5">
+                  {collectorFields}
+                </form>
+              </details>
+
+              <p className="flex items-baseline justify-end gap-6 text-base font-bold">
+                <span>Total:</span>
+                {summaryQuote ? (
+                  <span className="text-primary tabular-nums" data-testid="summary-total">
+                    {formatEth(summaryQuote.totalEth)}
+                  </span>
+                ) : (
+                  <span className="skeleton inline-block h-5 w-24" aria-hidden />
+                )}
+              </p>
+            </>
+          ) : (
+            <section aria-labelledby="review-title" className="flex flex-col gap-4">
+              <h2 id="review-title" ref={reviewHeading} tabIndex={-1} className="text-base font-bold outline-none">
+                Revise seu pedido
+              </h2>
+              <ul className="flex flex-col gap-2">
+                {lines.map((line) => (
+                  <LineItem key={line.key} line={line} />
+                ))}
+              </ul>
+              <SummaryRows quote={summaryQuote} loading={!summaryQuote} updating={quoteMutation.isPending} className="rounded-2xl bg-card p-4" />
+              <p className="text-sm">
+                Pagando com <strong>{selectedWallet ? `${walletTypeLabels[walletType]} · ${selectedWallet.nickname}` : '—'}</strong>
+                {connection === 'connected' ? <span className="text-success"> · conectada</span> : null}
+              </p>
+              {reviewDetails}
+              <Button variant="outline" onClick={() => setStep('form')} disabled={busy}>
+                Voltar e editar dados
+              </Button>
+            </section>
+          )}
+        </div>
+
+        <div className="fixed inset-x-0 bottom-0 z-30 bg-background/95 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur">
+          {submitState === 'retrying' ? (
+            <p role="status" className="mb-2 text-center text-xs text-subtle">
+              Sem resposta ainda. Verificando seu pedido com a mesma chave, sem duplicar a compra…
+            </p>
+          ) : null}
+          {step === 'form' ? (
+            <button
+              type="submit"
+              form="collector-form"
+              disabled={quoteMutation.isPending || connect.isPending || cart.isPending}
+              className="h-12 w-full rounded-full bg-primary text-sm font-bold text-primary-foreground disabled:opacity-50"
+            >
+              {connect.isPending ? 'Conectando carteira…' : quoteMutation.isPending ? 'Revalidando valores…' : 'Confirmar compra'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={busy || Boolean(stale) || blockingIssues.length > 0 || !quote || connection !== 'connected'}
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-primary-foreground disabled:opacity-50"
+            >
+              {busy ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" aria-hidden /> Enviando pedido…
+                </>
+              ) : submitState === 'failed' ? (
+                'Tentar novamente'
+              ) : (
+                `Confirmar compra · ${quote ? formatEth(quote.totalEth) : ''}`
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="container-page flex flex-col gap-6 py-6">
+      <Breadcrumbs items={[{ label: 'Início', to: '/' }, { label: 'Mercado', to: '/mercado' }, { label: 'Pagamento' }]} />
+      <h1 className="sr-only">Pagamento</h1>
+
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_490px]">
+        {/* ---------- Left: collector profile or review ---------- */}
+        {step === 'form' ? (
+          <form id="collector-form" onSubmit={onContinue} noValidate aria-labelledby="collector-title" className="flex flex-col gap-6">
+            <h2 id="collector-title" className="text-lg font-bold tracking-wide">
+              Perfil do colecionador
+            </h2>
+            {submitError ? <InlineAlert tone="error">{submitError}</InlineAlert> : null}
+            {collectorFields}
+          </form>
+        ) : (
+          <section aria-labelledby="review-title" className="flex flex-col gap-6">
+            <h2 id="review-title" ref={reviewHeading} tabIndex={-1} className="text-lg font-bold tracking-wide outline-none">
+              Revise seu pedido
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Confira os dados abaixo. Os valores foram revalidados agora e serão verificados de novo ao confirmar.
+            </p>
+            {reviewDetails}
             <div>
               <Button variant="outline" onClick={() => setStep('form')} disabled={busy}>
                 Voltar e editar dados

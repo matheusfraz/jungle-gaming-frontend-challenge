@@ -51,7 +51,7 @@ Cupons: `KURIO10` (10%), `GENESIS25` (25%), `VERAO2025` (expirado). Códigos de 
 | `pnpm preview:demo` | Serve o build em `http://127.0.0.1:4173` |
 | `pnpm typecheck` | TypeScript (app, configs e testes) |
 | `pnpm lint` | ESLint |
-| `pnpm test:e2e` | Playwright (Chromium desktop 1440 px e mobile 390 px) |
+| `pnpm test:e2e` | Playwright (Chromium desktop 1440 px e mobile 390 px, com os frames mobile) |
 | `pnpm test:e2e:ui` | Playwright em modo UI |
 | `pnpm test:e2e:update` | Regenera os baselines visuais |
 | `pnpm test:e2e:report` | Abre o relatório HTML (`playwright-report/`) |
@@ -131,7 +131,7 @@ O Playwright sobe `pnpm dev:mocks` na porta 4173. Cada teste roda em contexto is
 | `11-accessibility` | skip link, foco em diálogos, erros associados, operação por teclado |
 | `12-loading-errors` | skeletons, 500, offline, 503 transitório, vazio |
 | `13-responsive` | sem overflow horizontal em 390, 768 e 1440 px em todas as telas |
-| `visual/visual.spec.ts` | regressão visual de início, detalhe, carrinho e pagamento (desktop e mobile) |
+| `visual/visual.spec.ts` | regressão visual de início, detalhe, carrinho e pagamento (frames desktop e mobile) |
 
 ## Lighthouse
 

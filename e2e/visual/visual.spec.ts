@@ -1,4 +1,4 @@
-import { addToCartFromDetail, cards, expect, login, openApp, test, USERS } from '../support/fixtures'
+import { addToCartFromDetail, cards, expect, isMobile, login, openApp, test, USERS } from '../support/fixtures'
 import type { Page } from '@playwright/test'
 
 /**
@@ -20,7 +20,7 @@ test.describe('Regressão visual', () => {
   test('início', async ({ page }) => {
     await openApp(page, '/')
     await expect(cards(page)).toHaveCount(9)
-    await expect(page.getByText('NFT EM DESTAQUE')).toBeVisible()
+    if (!isMobile(page)) await expect(page.getByText('NFT EM DESTAQUE')).toBeVisible()
     await stabilize(page)
     await expect(page).toHaveScreenshot('inicio.png', { fullPage: true })
   })

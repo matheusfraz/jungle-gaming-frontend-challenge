@@ -1,12 +1,12 @@
-import { expect, login, logout, openApp, test, USERS } from '../support/fixtures'
+import { expect, login, loginForm, logout, openApp, registerForm, test, USERS } from '../support/fixtures'
 
 test.describe('3. Cadastro, login, expiração, logout e troca de usuário', () => {
   test('cadastro valida campos, trata conflito, confirma o e-mail e autentica', async ({ page, mocks }) => {
     await openApp(page, '/cadastro')
-    const dialog = page.getByRole('dialog')
+    const dialog = registerForm(page)
 
     // Client-side validation
-    await dialog.getByRole('button', { name: 'Criar conta' }).click()
+    await dialog.getByRole('button', { name: /^Criar (conta|perfil)$/ }).click()
     await expect(dialog.getByText('Nome de usuário é obrigatório.')).toBeVisible()
     await expect(dialog.getByPlaceholder('Nome de usuário')).toHaveAttribute('aria-invalid', 'true')
 
@@ -15,12 +15,12 @@ test.describe('3. Cadastro, login, expiração, logout e troca de usuário', () 
     await dialog.getByPlaceholder('Digite seu e-mail').fill(USERS.ana.email)
     await dialog.getByPlaceholder('Senha', { exact: true }).fill('Segura123')
     await dialog.getByPlaceholder('Confirmar senha').fill('Segura123')
-    await dialog.getByRole('button', { name: 'Criar conta' }).click()
+    await dialog.getByRole('button', { name: /^Criar (conta|perfil)$/ }).click()
     await expect(dialog.getByText('Este e-mail já está cadastrado.')).toBeVisible()
 
     // Fix the e-mail: the API sends a confirmation code instead of creating the account.
     await dialog.getByPlaceholder('Digite seu e-mail').fill('nova@kurio.test')
-    await dialog.getByRole('button', { name: 'Criar conta' }).click()
+    await dialog.getByRole('button', { name: /^Criar (conta|perfil)$/ }).click()
     const verify = page.getByTestId('verify-email')
     await expect(verify.getByRole('heading', { name: 'Confirme seu e-mail' })).toBeVisible()
     await expect(verify).toContainText('nova@kurio.test')
@@ -42,8 +42,8 @@ test.describe('3. Cadastro, login, expiração, logout e troca de usuário', () 
 
     await codeInput.fill(code)
     await page.getByRole('button', { name: 'Confirmar e criar conta' }).click()
-    await expect(page.getByRole('dialog')).toHaveCount(0)
     await page.waitForFunction(() => Boolean(localStorage.getItem('kurio:token')))
+    await expect(page).not.toHaveURL(/\/cadastro/)
 
     // Session survives refresh
     await page.reload()
@@ -54,12 +54,12 @@ test.describe('3. Cadastro, login, expiração, logout e troca de usuário', () 
   test('código expirado e reenvio (relógio controlado)', async ({ page, mocks }) => {
     await page.clock.install()
     await openApp(page, '/cadastro')
-    const dialog = page.getByRole('dialog')
+    const dialog = registerForm(page)
     await dialog.getByPlaceholder('Nome de usuário').fill('relogio_teste')
     await dialog.getByPlaceholder('Digite seu e-mail').fill('relogio@kurio.test')
     await dialog.getByPlaceholder('Senha', { exact: true }).fill('Segura123')
     await dialog.getByPlaceholder('Confirmar senha').fill('Segura123')
-    await dialog.getByRole('button', { name: 'Criar conta' }).click()
+    await dialog.getByRole('button', { name: /^Criar (conta|perfil)$/ }).click()
     await expect(page.getByTestId('verify-email')).toBeVisible()
     const firstCode = await mocks.latestCode('relogio@kurio.test')
 
@@ -75,14 +75,14 @@ test.describe('3. Cadastro, login, expiração, logout e troca de usuário', () 
     await expect.poll(() => mocks.inbox('relogio@kurio.test').then((messages) => messages.length)).toBe(2)
     await page.getByLabel('Código de confirmação').fill(await mocks.latestCode('relogio@kurio.test'))
     await page.getByRole('button', { name: 'Confirmar e criar conta' }).click()
-    await expect(page.getByRole('dialog')).toHaveCount(0)
     await page.waitForFunction(() => Boolean(localStorage.getItem('kurio:token')))
+    await expect(page).not.toHaveURL(/\/cadastro/)
   })
 
   test('login inválido mostra erro e login válido retorna ao fluxo anterior', async ({ page }) => {
     await openApp(page, '/perfil/carteiras')
     await expect(page).toHaveURL(/\/entrar\?redirect=/)
-    const dialog = page.getByRole('dialog')
+    const dialog = loginForm(page)
     await dialog.getByPlaceholder('contato@email.com').fill(USERS.ana.email)
     await dialog.getByPlaceholder('Senha').fill('errada123')
     await dialog.getByRole('button', { name: 'Entrar', exact: true }).click()
@@ -104,7 +104,7 @@ test.describe('3. Cadastro, login, expiração, logout e troca de usuário', () 
 
     await expect(page).toHaveURL(/\/entrar\?.*reason=expired/)
     await expect(page.getByText('Sua sessão expirou. Entre novamente para continuar de onde parou.')).toBeVisible()
-    const dialog = page.getByRole('dialog')
+    const dialog = loginForm(page)
     await dialog.getByPlaceholder('contato@email.com').fill(USERS.ana.email)
     await dialog.getByPlaceholder('Senha').fill(USERS.ana.password)
     await dialog.getByRole('button', { name: 'Entrar', exact: true }).click()
